@@ -118,6 +118,28 @@
   .gendernote{font-size:.78rem;color:var(--seal-soft);min-height:1em}
   .hint.warn{color:var(--seal-soft)}
 
+  .han.masked,.gloss.masked{color:var(--paper-dim);opacity:.55}
+  .more{margin:14px auto 0;max-width:40ch;font-size:.82rem;color:var(--paper-dim);line-height:1.55;text-align:left;border-left:2px solid var(--jade);padding:4px 0 4px 10px}
+  .more-note{color:var(--jade);margin-bottom:4px}
+  .more-ex .mz{font-family:"Songti SC","Noto Serif CJK SC",serif;color:var(--paper);font-size:.95rem}
+  .more-ex .mp{color:var(--amber)}
+  .reveal{margin:18px auto 0;display:block}
+  .stage{transition:box-shadow .2s}
+  .stage.flash-yes{box-shadow:inset 0 0 0 2px var(--jade)} .stage.flash-no{box-shadow:inset 0 0 0 2px var(--seal)}
+  .grade{display:flex;align-items:center;justify-content:center;gap:12px;margin:4px 0 6px;flex-wrap:wrap}
+  .gbtn{border:1px solid var(--line);background:var(--surface-2);color:var(--paper);border-radius:999px;padding:9px 16px;font-size:.85rem;cursor:pointer;transition:.15s}
+  .gbtn.no:hover{border-color:var(--seal);color:var(--seal-soft)} .gbtn.yes:hover{border-color:var(--jade);color:var(--jade)}
+  .gbtn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+  .gbtn kbd{font-size:.7rem;opacity:.55;margin-left:7px;font-family:inherit}
+  .srsstatus{font-size:.75rem;color:var(--paper-dim);min-width:150px;text-align:center}
+  .srsstatus[data-s=ok]{color:var(--jade)} .srsstatus[data-s=due]{color:var(--amber)} .srsstatus[data-s=hard]{color:var(--seal-soft)}
+  .lessonnote{font-size:.75rem;color:var(--paper-dim);margin-top:7px;line-height:1.45}
+  .stats{font-size:.72rem;color:var(--paper-dim);letter-spacing:.03em;text-align:right}
+  .wlist li::before{content:"";flex:0 0 6px;width:6px;height:6px;border-radius:50%;align-self:center;border:1px solid var(--line)}
+  .wlist li[data-s=ok]::before{background:var(--jade);border-color:var(--jade)}
+  .wlist li[data-s=due]::before{background:var(--amber);border-color:var(--amber)}
+  .wlist li[data-s=hard]::before{background:var(--seal);border-color:var(--seal)}
+
   /* list */
   .listhead{display:flex;align-items:center;justify-content:space-between;margin:30px 2px 12px}
   .listhead h2{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-dim);font-weight:600;margin:0}
@@ -160,11 +182,13 @@
     <div class="han" id="han">海边</div>
     <div class="pinyin" id="pinyin">hǎibiān</div>
     <div class="gloss" id="gloss">Seaside / Beach</div>
+    <div class="more" id="more" hidden></div>
     <div class="example" id="example" hidden>
       <div class="ex-zh" id="exzh"></div>
       <div class="ex-py" id="expy"></div>
       <div class="ex-en" id="exen"></div>
     </div>
+    <button class="chip reveal" id="reveal" hidden>Reveal answer · R</button>
   </section>
 
   <div class="transport">
@@ -179,11 +203,28 @@
     </button>
   </div>
 
+  <div class="grade">
+    <button class="gbtn no" id="grade-no" title="Didn't know it — comes back in 10 minutes">✗ Didn't know<kbd>1</kbd></button>
+    <span class="srsstatus" id="srsstatus"></span>
+    <button class="gbtn yes" id="grade-yes" title="Knew it — comes back in 1, 3, 8… days">✓ Knew it<kbd>2</kbd></button>
+  </div>
+
   <div class="panel">
     <div class="row">
       <label for="lesson">Lesson</label>
-      <div class="ctl">
+      <div class="ctl" style="flex-direction:column;align-items:stretch;gap:0">
         <select id="lesson"></select>
+        <div class="lessonnote" id="lessonnote" hidden></div>
+      </div>
+    </div>
+    <div class="row">
+      <label>Mode</label>
+      <div class="ctl">
+        <div class="chips" id="quizmode">
+          <button class="chip" data-q="off" aria-pressed="true" title="Hear the word, then its meaning">Listen</button>
+          <button class="chip" data-q="en2zh" title="See and hear the English, say the Chinese before it's revealed">Quiz: English → 中文</button>
+          <button class="chip" data-q="listen" title="Hear only the Chinese, guess the meaning before it's revealed">Quiz: audio → meaning</button>
+        </div>
       </div>
     </div>
     <div class="row">
@@ -211,10 +252,18 @@
       </div>
     </div>
     <div class="row">
+      <label for="think" title="Silence before the answer (or the English) so you can try to recall it first">Think time</label>
+      <div class="ctl">
+        <input type="range" id="think" min="0" max="5" step="0.5" value="1.5">
+        <span class="val" id="thinkval">1.5s</span>
+      </div>
+    </div>
+    <div class="row">
       <label>Options</label>
       <div class="ctl">
         <div class="chips">
           <button class="chip" id="english" aria-pressed="true">Read English</button>
+          <button class="chip" id="slowfirst" aria-pressed="false" title="First repetition at 0.6× speed, then normal speed">Slow first</button>
           <button class="chip" id="example-toggle" aria-pressed="false">Example sentence</button>
           <button class="chip" id="shuffle" aria-pressed="false">Shuffle</button>
           <button class="chip" id="byfreq" aria-pressed="false" title="Sort the current list so the most common words come first">★ Most common first</button>
@@ -240,9 +289,9 @@
     </div>
   </div>
 
-  <p class="hint" id="hint">Tip: tap the card or press <b>Space</b> to play/pause · arrow keys to skip. Keep this tab open while it loops.</p>
+  <p class="hint" id="hint">Tip: tap the card or press <b>Space</b> to play/pause · <b>← →</b> skip · <b>1</b> / <b>2</b> rate ✗ / ✓ · <b>R</b> reveal in quiz mode. Your ratings and settings are saved in this browser.</p>
 
-  <div class="listhead"><h2>All words · tap to jump</h2></div>
+  <div class="listhead"><h2>Words · tap to jump</h2><span class="stats" id="stats"></span></div>
   <ul class="wlist" id="wlist"></ul>
 </div>
 
@@ -250,4 +299,5 @@
 <script src="examples-a.js"></script>
 <script src="examples-b.js"></script>
 <script src="lessons.js"></script>
+<script src="meta.js"></script>
 <script src="app.js"></script>
