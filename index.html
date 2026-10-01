@@ -1,0 +1,253 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>听 · Chinese Vocabulary Loop</title>
+<style>
+  :root{
+    --ink-1:#0c1a19;
+    --ink-2:#11302d;
+    --paper:#f3ede0;
+    --paper-dim:#cbc4b4;
+    --seal:#d6452c;
+    --seal-soft:#e8765e;
+    --amber:#d8b06a;
+    --jade:#7fb8a3;
+    --line:rgba(243,237,224,.12);
+    --surface:rgba(243,237,224,.05);
+    --surface-2:rgba(243,237,224,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    color:var(--paper);
+    background:
+      radial-gradient(120% 90% at 20% -10%, #163a35 0%, transparent 55%),
+      radial-gradient(130% 100% at 100% 110%, #0e2522 0%, transparent 60%),
+      linear-gradient(160deg,var(--ink-1),var(--ink-2));
+    background-attachment:fixed;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:22px 18px 60px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand .zh{font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;font-size:1.5rem;color:var(--seal-soft);letter-spacing:.04em}
+  .brand .en{font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-dim)}
+  .counter{font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--paper-dim);letter-spacing:.05em}
+  .counter b{color:var(--paper);font-weight:600}
+
+  /* stage */
+  .stage{
+    position:relative;border:1px solid var(--line);border-radius:20px;
+    background:var(--surface);
+    padding:40px 26px 34px;text-align:center;overflow:hidden;
+    box-shadow:0 30px 60px -40px rgba(0,0,0,.7);
+  }
+  .pbar{position:absolute;top:0;left:0;height:3px;background:var(--seal);width:0%;transition:width .25s linear}
+  .seal{
+    position:absolute;top:18px;right:18px;width:48px;height:48px;border-radius:11px;
+    border:1.5px solid var(--seal);color:var(--seal);
+    display:grid;place-items:center;
+    font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1.5rem;
+    opacity:.32;transition:opacity .3s, transform .3s, box-shadow .3s;
+  }
+  .seal.live{opacity:1;box-shadow:0 0 0 0 rgba(214,69,44,.5);animation:pulse 1.6s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(214,69,44,.45)}100%{box-shadow:0 0 0 16px rgba(214,69,44,0)}}
+
+  .han{
+    font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;
+    font-size:clamp(4.5rem,21vw,10rem);line-height:1.04;font-weight:600;
+    letter-spacing:.02em;margin:6px 0 14px;
+  }
+  .pinyin{font-size:clamp(1.2rem,5vw,1.7rem);color:var(--amber);letter-spacing:.03em;margin-bottom:8px}
+  .gloss{font-size:clamp(1rem,4vw,1.25rem);color:var(--paper-dim);max-width:34ch;margin:0 auto}
+
+  .example{margin:22px auto 0;max-width:36ch;padding-top:18px;border-top:1px solid var(--line)}
+  .example.speaking .ex-zh{color:var(--seal-soft)}
+  .ex-zh{font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;font-size:clamp(1.4rem,6vw,2rem);line-height:1.35;margin-bottom:6px;transition:color .2s}
+  .ex-py{font-size:clamp(.9rem,3.6vw,1.05rem);color:var(--amber);opacity:.9;margin-bottom:4px}
+  .ex-en{font-size:clamp(.9rem,3.6vw,1.05rem);color:var(--paper-dim)}
+
+  /* transport */
+  .transport{display:flex;align-items:center;justify-content:center;gap:20px;margin:26px 0 8px}
+  .tbtn{
+    border:1px solid var(--line);background:var(--surface-2);color:var(--paper);
+    width:58px;height:58px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
+    transition:background .15s,border-color .15s,transform .08s;
+  }
+  .tbtn:hover{background:rgba(243,237,224,.13)}
+  .tbtn:active{transform:scale(.94)}
+  .tbtn svg{width:24px;height:24px;fill:var(--paper)}
+  .play{
+    width:84px;height:84px;background:var(--seal);border-color:var(--seal);
+    box-shadow:0 14px 30px -10px rgba(214,69,44,.7);
+  }
+  .play:hover{background:var(--seal-soft);border-color:var(--seal-soft)}
+  .play svg{width:34px;height:34px;fill:#fff}
+  .tbtn:focus-visible,.chip:focus-visible,.row select:focus-visible,.wlist li:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+
+  /* settings */
+  .panel{margin-top:22px;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:6px 16px}
+  .row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row label{flex:0 0 118px;font-size:.85rem;color:var(--paper-dim);letter-spacing:.03em}
+  .row .ctl{flex:1;display:flex;align-items:center;gap:12px}
+  .row input[type=range]{flex:1;accent-color:var(--seal);height:4px}
+  .val{font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--paper);min-width:46px;text-align:right}
+  .row select{
+    flex:1;background:var(--ink-2);color:var(--paper);border:1px solid var(--line);
+    border-radius:9px;padding:8px 10px;font-size:.85rem;max-width:100%;
+  }
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--line);background:transparent;color:var(--paper-dim);
+    padding:7px 13px;border-radius:999px;font-size:.82rem;cursor:pointer;transition:.15s;letter-spacing:.02em;
+  }
+  .chip[aria-pressed=true]{background:var(--seal);border-color:var(--seal);color:#fff}
+  .seg{display:flex;gap:6px}
+  .seg .chip{padding:6px 14px}
+  a.chip{text-decoration:none;display:inline-block}
+  .applink{display:flex;gap:8px;margin:0 0 18px}
+
+  .tier{position:absolute;top:22px;left:18px;font-size:.8rem;letter-spacing:.1em;color:var(--amber);opacity:.85}
+  .tier[data-t="2"]{opacity:.6} .tier[data-t="3"]{opacity:.4}
+  .wlist .lt{font-size:.62rem;color:var(--amber);letter-spacing:.05em;white-space:nowrap}
+  .wlist .lt[data-t="2"]{opacity:.6} .wlist .lt[data-t="3"]{opacity:.4}
+  .hint{font-size:.78rem;color:var(--paper-dim);margin:14px 2px 0;line-height:1.5}
+  .gendernote{font-size:.78rem;color:var(--seal-soft);min-height:1em}
+  .hint.warn{color:var(--seal-soft)}
+
+  /* list */
+  .listhead{display:flex;align-items:center;justify-content:space-between;margin:30px 2px 12px}
+  .listhead h2{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-dim);font-weight:600;margin:0}
+  .wlist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .wlist li{
+    display:flex;align-items:baseline;gap:10px;padding:10px 12px;border-radius:11px;cursor:pointer;
+    border:1px solid transparent;background:var(--surface);transition:.12s;
+  }
+  .wlist li:hover{background:var(--surface-2)}
+  .wlist li.active{border-color:var(--seal);background:rgba(214,69,44,.12)}
+  .wlist .n{font-variant-numeric:tabular-nums;font-size:.7rem;color:var(--paper-dim);min-width:20px}
+  .wlist .lz{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1.15rem}
+  .wlist .lp{font-size:.74rem;color:var(--amber);margin-left:auto;white-space:nowrap}
+  @media(max-width:560px){
+    .wlist{grid-template-columns:1fr}
+    .row{flex-wrap:wrap}
+    .row label{flex-basis:100%}
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="zh">听</span>
+      <span class="en">Listen &amp; Learn</span>
+    </div>
+    <div class="counter"><b id="cur">1</b> / <span id="total">0</span></div>
+  </header>
+
+  <div class="applink">
+    <a href="index.html" class="chip" aria-pressed="true">听 Vocabulary</a>
+    <a href="radicals.html" class="chip" aria-pressed="false">部首 Radicals</a>
+    <a href="#frequency" class="chip" id="freqtab" aria-pressed="false">★ By frequency</a>
+  </div>
+
+  <section class="stage" id="stage" role="button" tabindex="0" aria-label="Play or pause">
+    <div class="pbar" id="pbar"></div>
+    <div class="seal" id="seal">听</div>
+    <div class="tier" id="tier" title=""></div>
+    <div class="han" id="han">海边</div>
+    <div class="pinyin" id="pinyin">hǎibiān</div>
+    <div class="gloss" id="gloss">Seaside / Beach</div>
+    <div class="example" id="example" hidden>
+      <div class="ex-zh" id="exzh"></div>
+      <div class="ex-py" id="expy"></div>
+      <div class="ex-en" id="exen"></div>
+    </div>
+  </section>
+
+  <div class="transport">
+    <button class="tbtn" id="prev" aria-label="Previous word">
+      <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+    </button>
+    <button class="tbtn play" id="play" aria-label="Play">
+      <svg id="playicon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="tbtn" id="next" aria-label="Next word">
+      <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
+    </button>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <label for="lesson">Lesson</label>
+      <div class="ctl">
+        <select id="lesson"></select>
+      </div>
+    </div>
+    <div class="row">
+      <label for="rate">Speed</label>
+      <div class="ctl">
+        <input type="range" id="rate" min="0.5" max="1.2" step="0.05" value="0.8">
+        <span class="val" id="rateval">0.80×</span>
+      </div>
+    </div>
+    <div class="row">
+      <label>Repeat each</label>
+      <div class="ctl">
+        <div class="seg" id="repeat">
+          <button class="chip" data-r="1">1×</button>
+          <button class="chip" data-r="2" aria-pressed="true">2×</button>
+          <button class="chip" data-r="3">3×</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <label for="gap">Pause between</label>
+      <div class="ctl">
+        <input type="range" id="gap" min="0.3" max="3" step="0.1" value="1.2">
+        <span class="val" id="gapval">1.2s</span>
+      </div>
+    </div>
+    <div class="row">
+      <label>Options</label>
+      <div class="ctl">
+        <div class="chips">
+          <button class="chip" id="english" aria-pressed="true">Read English</button>
+          <button class="chip" id="example-toggle" aria-pressed="false">Example sentence</button>
+          <button class="chip" id="shuffle" aria-pressed="false">Shuffle</button>
+          <button class="chip" id="byfreq" aria-pressed="false" title="Sort the current list so the most common words come first">★ Most common first</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <label for="voice">Chinese voice</label>
+      <div class="ctl">
+        <select id="voice"><option>Loading voices…</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <label>Voice gender</label>
+      <div class="ctl" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <div class="chips" id="gender">
+          <button class="chip" data-g="any" aria-pressed="true">Any</button>
+          <button class="chip" data-g="m">♂ Male</button>
+          <button class="chip" data-g="f">♀ Female</button>
+        </div>
+        <span class="gendernote" id="gendernote"></span>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint" id="hint">Tip: tap the card or press <b>Space</b> to play/pause · arrow keys to skip. Keep this tab open while it loops.</p>
+
+  <div class="listhead"><h2>All words · tap to jump</h2></div>
+  <ul class="wlist" id="wlist"></ul>
+</div>
+
+<script src="words.js"></script>
+<script src="examples-a.js"></script>
+<script src="examples-b.js"></script>
+<script src="lessons.js"></script>
+<script src="app.js"></script>
