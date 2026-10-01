@@ -11,7 +11,17 @@ LESSON_SPEC.forEach(([name,count])=>{ for(let i=0;i<count;i++) LESSONS.push(name
 const FREQ = {};
 Object.entries(FREQ_TIERS).forEach(([t,s])=>s.split(" ").forEach(w=>{ if(w) FREQ[w]=+t; }));
 const TIER_LABEL = {1:"★★★ Most common · HSK 1–2", 2:"★★ Common · HSK 3–4", 3:"★ Less common · HSK 5+"};
-const tierOf = i => FREQ[WORDS[i][0]] || 2;
+/* ---------- two decks: vocabulary and radicals ---------- */
+const RAD_RANK = {}; RAD_ORDER.split(" ").forEach((r,k)=>{ RAD_RANK[r]=k; });
+const isRad = () => settings.tab === "radicals";
+const count = () => isRad() ? RADICALS.length : WORDS.length;
+const range = () => Array.from({length:count()}, (_,i)=>i);
+const card  = i => isRad()
+  ? { zh:RADICALS[i][0], py:RADICALS[i][1], en:RADICALS[i][2] }
+  : { zh:WORDS[i][0],    py:WORDS[i][1],    en:WORDS[i][2] };
+const radRank = i => RAD_RANK[RADICALS[i][0]] ?? 99;
+const tierOf = i => isRad() ? (radRank(i) < 13 ? 1 : radRank(i) < 27 ? 2 : 3) : (FREQ[WORDS[i][0]] || 2);
+const freqKey = i => isRad() ? radRank(i) : tierOf(i)*1e4 + i;
 const stars  = t => "★★★".slice(0, 4-t);
 
 const POS = {};
@@ -29,10 +39,11 @@ const SRS_KEY = "ting.srs.v1", SET_KEY = "ting.settings.v1";
 // state per word: { r: streak, e: ease, iv: interval days, due: ms, l: lapses, last: 1|0, t: ms }
 let srs = store.get(SRS_KEY, {}) || {};
 const DAY = 864e5, MIN = 6e4;
-const stateOf = i => srs[WORDS[i][0]];
+const keyOf = i => isRad() ? "部首:"+RADICALS[i][0] : WORDS[i][0];
+const stateOf = i => srs[keyOf(i)];
 
 function grade(i, ok){
-  const k = WORDS[i][0], now = Date.now();
+  const k = keyOf(i), now = Date.now();
   const s = srs[k] || { r:0, e:2.5, iv:0, due:0, l:0 };
   if(ok){
     s.r += 1;
@@ -66,7 +77,7 @@ function statusOf(i){
 
 /* ---------- settings (persisted) ---------- */
 const DEFAULTS = { rate:0.8, repeat:2, gap:1.2, think:1.5, english:true, example:false, shuffle:false,
-                   byFreq:false, slowFirst:false, quiz:"off", lesson:"__all__", voice:"" };
+                   byFreq:false, slowFirst:false, quiz:"off", lesson:"__all__", voice:"", tab:"vocab" };
 const settings = Object.assign({}, DEFAULTS, store.get(SET_KEY, {}) || {});
 const saveSettings = () => store.set(SET_KEY, settings);
 
@@ -103,6 +114,7 @@ const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(
 const opt = (v, label) => '<option value="'+esc(v)+'">'+esc(label)+'</option>';
 
 function buildLessonMenu(){
+  if(isRad()) return;                    // radicals have no lesson menu
   const sel = $("lesson");
   const all = WORDS.map((_,i)=>i);
   const n = f => all.filter(f).length;
@@ -124,6 +136,7 @@ function buildLessonMenu(){
 }
 
 function selectionFor(v){
+  if(isRad()) return range();
   const all = WORDS.map((_,i)=>i);
   if(v === "__all__") return all;
   if(v === "__due")  return all.filter(isDue).sort((a,b)=>stateOf(a).due - stateOf(b).due);
@@ -134,18 +147,18 @@ function selectionFor(v){
   return all.filter(i=>LESSONS[i]===v);
 }
 
-function sortByFreq(){ order.sort((a,b)=> (tierOf(a)-tierOf(b)) || (a-b)); }
+function sortByFreq(){ order.sort((a,b)=> freqKey(a)-freqKey(b)); }
 function reshuffle(){
   for(let i=order.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [order[i],order[j]]=[order[j],order[i]]; }
 }
 
 function applyLesson(){
   order = selectionFor(currentLesson);
-  if(settings.byFreq && currentLesson !== "__due") sortByFreq();
+  if(settings.byFreq && (isRad() || currentLesson !== "__due")) sortByFreq();
   if(settings.shuffle) reshuffle();
   pos = 0; revealedFor = -1;
   $("lessonnote").textContent = STUDY_NOTE[currentLesson] || "";
-  $("lessonnote").hidden = !STUDY_NOTE[currentLesson];
+  $("lessonnote").hidden = isRad() || !STUDY_NOTE[currentLesson];
   buildList(); render(); updateStats();
 }
 
@@ -251,26 +264,37 @@ function render(){
     pinyin.textContent = ""; gloss.classList.remove("masked");
     gloss.textContent = EMPTY_NOTE[currentLesson] || "No words here.";
     exampleBox.hidden = true; moreBox.hidden = true; $("reveal").hidden = true;
+    $("variants").hidden = true; $("grows").hidden = true;
     tierEl.textContent = ""; setStatus(null);
     cur.textContent = 0; $("total").textContent = 0; pbar.style.width = "0%";
     return;
   }
-  const i = idx(), w = WORDS[i], m = masked();
+  const i = idx(), c = card(i), m = masked();
   const hideEn = m && settings.quiz === "listen";
-  han.textContent = m ? "？" : w[0];
+  han.textContent = m ? "？" : c.zh;
   han.classList.toggle("masked", !!m);
-  pinyin.textContent = m ? " " : w[1];
-  gloss.textContent = hideEn ? "Listen — what does it mean?" : w[2];
+  pinyin.textContent = m ? " " : c.py;
+  gloss.textContent = hideEn ? "Listen — what does it mean?" : c.en;
   gloss.classList.toggle("masked", hideEn);
   const t = tierOf(i); tierEl.textContent = stars(t); tierEl.title = TIER_LABEL[t]; tierEl.dataset.t = t;
 
-  const ex = EXAMPLES[i];
-  if(settings.example && ex && !m){
-    exzh.textContent=ex[0]; expy.textContent=ex[1]; exen.textContent=ex[2];
-    exampleBox.hidden=false;
-  } else exampleBox.hidden=true;
-  exampleBox.classList.remove("speaking");
-  if(m) moreBox.hidden = true; else renderMore(w);
+  if(isRad()){
+    const r = RADICALS[i];
+    exampleBox.hidden = true; moreBox.hidden = true;
+    $("variants").hidden = m || !r[3];
+    $("vforms").textContent = r[3] ? r[3].split("").join("  ") : "";
+    $("grows").hidden = !!m;
+    $("exgrid").innerHTML = r[4].map(e=>'<div class="ex"><div class="ec">'+e[0]+'</div><div class="ep">'+e[1]+'</div><div class="em">'+esc(e[2])+'</div></div>').join("");
+  } else {
+    $("variants").hidden = true; $("grows").hidden = true;
+    const ex = EXAMPLES[i];
+    if(settings.example && ex && !m){
+      exzh.textContent=ex[0]; expy.textContent=ex[1]; exen.textContent=ex[2];
+      exampleBox.hidden=false;
+    } else exampleBox.hidden=true;
+    exampleBox.classList.remove("speaking");
+    if(m) moreBox.hidden = true; else renderMore(WORDS[i]);
+  }
   $("reveal").hidden = !m;
   setStatus(i);
 
@@ -288,10 +312,10 @@ function setStatus(i){
 }
 
 function updateStats(){
-  const all = WORDS.map((_,i)=>i);
+  const all = range();
   const rated = all.filter(i=>!isNew(i)).length;
   $("stats").textContent = rated
-    ? rated+" rated · "+all.filter(isDue).length+" due · "+all.filter(isHard).length+" hard · "+(WORDS.length-rated)+" new"
+    ? rated+" rated · "+all.filter(isDue).length+" due · "+all.filter(isHard).length+" hard · "+(all.length-rated)+" new"
     : "Tap ✓ / ✗ on a card to start tracking what you know";
 }
 
@@ -361,7 +385,7 @@ async function sayChinese(i, my){
   for(let r=0; r<settings.repeat; r++){
     if(!alive(my)) return false;
     const rt = (settings.slowFirst && r===0) ? Math.min(settings.rate, 0.6) : settings.rate;
-    await speakZh(WORDS[i][0], rt);
+    await speakZh(card(i).zh, rt);
     if(!alive(my)) return false;
     if(r < settings.repeat-1) await wait(220);
   }
@@ -382,7 +406,7 @@ async function loop(){
   while(alive(my)){
     if(!order.length){ stop(); return; }
     render();
-    const i = idx(), w = WORDS[i];
+    const i = idx(), c = card(i), w = [c.zh, c.py, c.en];
     const enRate = Math.max(0.9, settings.rate);
     const think = () => wait(settings.think*1000);
 
@@ -405,7 +429,20 @@ async function loop(){
       }
     }
 
-    const ex = EXAMPLES[i];
+    if(isRad() && settings.example){             // radicals: read the three example characters
+      const cells = $("exgrid").children;
+      for(let j=0;j<RADICALS[i][4].length;j++){
+        if(!alive(my)) return;
+        const e = RADICALS[i][4][j];
+        cells[j] && cells[j].classList.add("speaking");
+        await wait(200);
+        await speak(e[0], "zh-CN", settings.rate); if(!alive(my)) return;
+        if(settings.english && enVoice){ await wait(120); await speak(enText(e[2]), "en-US", enRate); }
+        cells[j] && cells[j].classList.remove("speaking");
+      }
+      if(!alive(my)) return;
+    }
+    const ex = isRad() ? null : EXAMPLES[i];
     if(settings.example && ex){
       await wait(300);
       if(!alive(my)) return;
@@ -455,7 +492,7 @@ function rateCurrent(ok){
   stage.classList.add(ok ? "flash-yes" : "flash-no");
   setTimeout(()=>stage.classList.remove("flash-yes","flash-no"), 450);
 
-  const q = STUDY[currentLesson];
+  const q = isRad() ? null : STUDY[currentLesson];
   if(q && !ok){                       // study list: missed word goes to the back of the queue
     order.push(order.splice(pos,1)[0]);
     if(pos >= order.length) pos = 0;
@@ -500,16 +537,15 @@ function toggleChip(el,key){
 $("english").onclick = ()=>toggleChip($("english"),"english");
 $("slowfirst").onclick = ()=>toggleChip($("slowfirst"),"slowFirst");
 $("example-toggle").onclick = ()=>{ toggleChip($("example-toggle"),"example"); render(); };
-$("byfreq").onclick = ()=>{
-  toggleChip($("byfreq"),"byFreq");
+function setFreq(on){
   const was=playing; stop();
-  const keep = idx();
-  if(settings.byFreq){ if(!settings.shuffle) sortByFreq(); }
-  else if(!settings.shuffle) order.sort((a,b)=>a-b);
-  pos = Math.max(0, order.indexOf(keep));
+  settings.byFreq = on; saveSettings();
+  $("freqtab").setAttribute("aria-pressed", on);
+  if(!settings.shuffle){ order.sort((a,b)=>a-b); if(on) sortByFreq(); }
+  pos = 0; revealedFor = -1;            // start from the top of the re-sorted list
   buildList(); render();
   if(was) loop();
-};
+}
 $("shuffle").onclick = ()=>{
   toggleChip($("shuffle"),"shuffle");
   const keep = idx();
@@ -524,7 +560,6 @@ $("lesson").addEventListener("change", e=>{
   const was = playing; stop();
   currentLesson = e.target.value;
   settings.lesson = currentLesson; saveSettings();
-  $("freqtab").setAttribute("aria-pressed","false");
   applyLesson();
   if(was) loop();
 });
@@ -544,11 +579,11 @@ document.addEventListener("keydown", e=>{
 function buildList(){
   wlist.innerHTML="";
   order.forEach((wi,p)=>{
-    const w = WORDS[wi];
+    const c = card(wi);
     const li=document.createElement("li");
     li.tabIndex=0;
     li.dataset.s = statusOf(wi).cls;
-    li.innerHTML=`<span class="n">${p+1}</span><span class="lz">${w[0]}</span><span class="lt" data-t="${tierOf(wi)}">${stars(tierOf(wi))}</span><span class="lp">${w[1]}</span>`;
+    li.innerHTML=`<span class="n">${p+1}</span><span class="lz">${c.zh}</span><span class="lt" data-t="${tierOf(wi)}">${stars(tierOf(wi))}</span><span class="lp">${isRad() ? esc(c.en.split(" / ")[0]) : c.py}</span>`;
     const jump=()=>{ const was=playing; stop(); pos=p; revealedFor=-1; render(); if(was) loop(); };
     li.onclick=jump;
     li.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();jump();} };
@@ -556,16 +591,32 @@ function buildList(){
   });
 }
 
-$("freqtab").onclick = e=>{
-  e.preventDefault();
-  const was=playing; stop();
-  currentLesson="__all__"; $("lesson").value="__all__"; settings.lesson=currentLesson;
-  if(!settings.byFreq){ settings.byFreq=true; $("byfreq").setAttribute("aria-pressed","true"); }
-  saveSettings();
-  $("freqtab").setAttribute("aria-pressed","true");
-  applyLesson(); if(was) loop();
-  window.scrollTo({top:0,behavior:"smooth"});
-};
+$("freqtab").onclick = e=>{ e.preventDefault(); setFreq(!settings.byFreq); };
+
+/* ---------- tabs: vocabulary / radicals ---------- */
+function setTab(t){
+  const was = playing; stop();
+  settings.tab = t === "radicals" ? "radicals" : "vocab"; saveSettings();
+  const rad = isRad();
+  $("tab-vocab").setAttribute("aria-pressed", !rad);
+  $("tab-rad").setAttribute("aria-pressed", rad);
+  $("lessonrow").hidden = rad;
+  $("brandzh").textContent = rad ? "部首" : "听";
+  $("branden").textContent = rad ? "Radicals" : "Listen & Learn";
+  $("listtitle").textContent = rad ? "Radicals · tap to jump" : "Words · tap to jump";
+  $("example-toggle").textContent = rad ? "Example characters" : "Example sentence";
+  $("radlead").hidden = !rad;
+  document.title = rad ? "部首 · Chinese Radicals" : "听 · Chinese Vocabulary Loop";
+  buildLessonMenu();
+  applyLesson();
+  if(was) loop();
+}
+$("tab-vocab").onclick = e=>{ e.preventDefault(); setTab("vocab"); };
+$("tab-rad").onclick   = e=>{ e.preventDefault(); setTab("radicals"); };
+window.addEventListener && window.addEventListener("hashchange", ()=>{
+  if(location.hash==="#radicals") setTab("radicals");
+  else if(location.hash==="#vocab") setTab("vocab");
+});
 
 /* ---------- restore saved settings into the controls ---------- */
 function syncControls(){
@@ -577,7 +628,7 @@ function syncControls(){
   $("english").setAttribute("aria-pressed", settings.english);
   $("example-toggle").setAttribute("aria-pressed", settings.example);
   $("shuffle").setAttribute("aria-pressed", settings.shuffle);
-  $("byfreq").setAttribute("aria-pressed", settings.byFreq);
+  $("freqtab").setAttribute("aria-pressed", settings.byFreq);
   $("slowfirst").setAttribute("aria-pressed", settings.slowFirst);
 }
 
@@ -588,7 +639,8 @@ setInterval(()=>{
   if(!playing && order.length) setStatus(idx());
 }, 60000);
 
+if(location.hash==="#radicals") settings.tab = "radicals";
+if(location.hash==="#vocab")    settings.tab = "vocab";
+if(location.hash==="#frequency") settings.byFreq = true;
 syncControls();
-buildLessonMenu();
-applyLesson();
-if(location.hash==="#frequency") $("freqtab").click();
+setTab(settings.tab);

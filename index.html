@@ -16,6 +16,7 @@
     --surface-2:rgba(243,237,224,.08);
   }
   *{box-sizing:border-box}
+  [hidden]{display:none !important}
   html,body{margin:0}
   body{
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -108,7 +109,23 @@
   .seg{display:flex;gap:6px}
   .seg .chip{padding:6px 14px}
   a.chip{text-decoration:none;display:inline-block}
-  .applink{display:flex;gap:8px;margin:0 0 18px}
+  .applink{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap;align-items:center}
+  .navsep{flex:1}
+  .chip.toggle[aria-pressed=true]{background:var(--amber);border-color:var(--amber);color:var(--ink-1)}
+  .rad-line{display:flex;align-items:center;justify-content:center;gap:18px}
+  .radlead{font-size:.9rem;color:var(--paper-dim);line-height:1.55;margin:0 2px 18px;max-width:60ch}
+  .variants{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+  .variants .vlabel{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--paper-dim)}
+  .variants .vforms{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(1.6rem,7vw,2.6rem);color:var(--jade)}
+
+  .grows{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+  .grows .glabel{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-dim);margin-bottom:12px}
+  .ex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .ex{border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:12px 8px;transition:border-color .2s,background .2s}
+  .ex.speaking{border-color:var(--seal);background:rgba(214,69,44,.12)}
+  .ex .ec{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:clamp(1.8rem,8vw,2.4rem);line-height:1.1}
+  .ex .ep{font-size:.8rem;color:var(--amber);margin-top:2px}
+  .ex .em{font-size:.78rem;color:var(--paper-dim);margin-top:1px}
 
   .tier{position:absolute;top:22px;left:18px;font-size:.8rem;letter-spacing:.1em;color:var(--amber);opacity:.85}
   .tier[data-t="2"]{opacity:.6} .tier[data-t="3"]{opacity:.4}
@@ -163,23 +180,31 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <span class="zh">听</span>
-      <span class="en">Listen &amp; Learn</span>
+      <span class="zh" id="brandzh">听</span>
+      <span class="en" id="branden">Listen &amp; Learn</span>
     </div>
     <div class="counter"><b id="cur">1</b> / <span id="total">0</span></div>
   </header>
 
   <div class="applink">
-    <a href="index.html" class="chip" aria-pressed="true">听 Vocabulary</a>
-    <a href="radicals.html" class="chip" aria-pressed="false">部首 Radicals</a>
-    <a href="#frequency" class="chip" id="freqtab" aria-pressed="false">★ By frequency</a>
+    <a href="#vocab" class="chip" id="tab-vocab" aria-pressed="true">听 Vocabulary</a>
+    <a href="#radicals" class="chip" id="tab-rad" aria-pressed="false">部首 Radicals</a>
+    <span class="navsep"></span>
+    <a href="#frequency" class="chip toggle" id="freqtab" aria-pressed="false" title="Sort so the most common come first — works on both tabs">★ Most common first</a>
   </div>
+  <p class="radlead" id="radlead" hidden>Radicals are the building blocks of characters. Learn one, and every character built from it gets a handle. Each card shows the radical, its variant forms, and three characters it lives inside.</p>
 
   <section class="stage" id="stage" role="button" tabindex="0" aria-label="Play or pause">
     <div class="pbar" id="pbar"></div>
     <div class="seal" id="seal">听</div>
     <div class="tier" id="tier" title=""></div>
-    <div class="han" id="han">海边</div>
+    <div class="rad-line">
+      <div class="han" id="han">海边</div>
+      <div class="variants" id="variants" hidden>
+        <span class="vlabel">also written</span>
+        <span class="vforms" id="vforms"></span>
+      </div>
+    </div>
     <div class="pinyin" id="pinyin">hǎibiān</div>
     <div class="gloss" id="gloss">Seaside / Beach</div>
     <div class="more" id="more" hidden></div>
@@ -187,6 +212,10 @@
       <div class="ex-zh" id="exzh"></div>
       <div class="ex-py" id="expy"></div>
       <div class="ex-en" id="exen"></div>
+    </div>
+    <div class="grows" id="grows" hidden>
+      <div class="glabel">grows into</div>
+      <div class="ex-grid" id="exgrid"></div>
     </div>
     <button class="chip reveal" id="reveal" hidden>Reveal answer · R</button>
   </section>
@@ -210,7 +239,7 @@
   </div>
 
   <div class="panel">
-    <div class="row">
+    <div class="row" id="lessonrow">
       <label for="lesson">Lesson</label>
       <div class="ctl" style="flex-direction:column;align-items:stretch;gap:0">
         <select id="lesson"></select>
@@ -266,7 +295,6 @@
           <button class="chip" id="slowfirst" aria-pressed="false" title="First repetition at 0.6× speed, then normal speed">Slow first</button>
           <button class="chip" id="example-toggle" aria-pressed="false">Example sentence</button>
           <button class="chip" id="shuffle" aria-pressed="false">Shuffle</button>
-          <button class="chip" id="byfreq" aria-pressed="false" title="Sort the current list so the most common words come first">★ Most common first</button>
         </div>
       </div>
     </div>
@@ -291,7 +319,7 @@
 
   <p class="hint" id="hint">Tip: tap the card or press <b>Space</b> to play/pause · <b>← →</b> skip · <b>1</b> / <b>2</b> rate ✗ / ✓ · <b>R</b> reveal in quiz mode. Your ratings and settings are saved in this browser.</p>
 
-  <div class="listhead"><h2>Words · tap to jump</h2><span class="stats" id="stats"></span></div>
+  <div class="listhead"><h2 id="listtitle">Words · tap to jump</h2><span class="stats" id="stats"></span></div>
   <ul class="wlist" id="wlist"></ul>
 </div>
 
@@ -300,4 +328,5 @@
 <script src="examples-b.js"></script>
 <script src="lessons.js"></script>
 <script src="meta.js"></script>
+<script src="radicals.js"></script>
 <script src="app.js"></script>
