@@ -157,6 +157,28 @@
   .wlist li[data-s=due]::before{background:var(--amber);border-color:var(--amber)}
   .wlist li[data-s=hard]::before{background:var(--seal);border-color:var(--seal)}
 
+  /* tone colours: 1 red · 2 orange · 3 green · 4 blue · neutral grey */
+  .t1{color:#ff7b6b} .t2{color:#f3a64a} .t3{color:#7fd08e} .t4{color:#78a9ff} .t5{color:#a9b1ad}
+  .rlink{cursor:pointer;border-bottom:2px dotted rgba(127,184,163,.45);transition:border-color .15s,color .15s}
+  .rlink:hover{color:var(--jade);border-bottom-color:var(--jade)}
+  .radwords{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+  .rw-head{font-size:.78rem;color:var(--paper-dim);margin-bottom:10px} .rw-head b{color:var(--paper)}
+  .rw-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+  .wchip{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1rem;border:1px solid var(--line);background:var(--surface-2);color:var(--paper);border-radius:8px;padding:4px 9px;cursor:pointer}
+  .wchip.known{border-color:var(--jade);color:var(--jade)}
+  .wchip:hover{border-color:var(--amber)}
+  .rw-more{font-size:.75rem;color:var(--paper-dim);align-self:center}
+  .goal{display:flex;align-items:center;justify-content:center;gap:10px;font-size:.8rem;color:var(--paper-dim);margin:2px 0 4px}
+  .goal b{color:var(--paper)} .goal[data-met=true]{color:var(--jade)}
+  .g-bar{width:90px;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;display:inline-block}
+  .g-bar span{display:block;height:100%;background:var(--amber);border-radius:3px}
+  .goal[data-met=true] .g-bar span{background:var(--jade)}
+  .searchrow{display:flex;align-items:center;gap:10px;margin:0 2px 12px}
+  .searchrow input{flex:1;background:var(--ink-2);color:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.9rem}
+  .searchrow input:focus{outline:2px solid var(--amber);outline-offset:1px}
+  .searchnote{font-size:.72rem;color:var(--paper-dim);white-space:nowrap}
+  .audionote{font-size:.75rem;color:var(--jade);margin:8px 2px 0}
+
   /* list */
   .listhead{display:flex;align-items:center;justify-content:space-between;margin:30px 2px 12px}
   .listhead h2{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-dim);font-weight:600;margin:0}
@@ -217,6 +239,7 @@
       <div class="glabel">grows into</div>
       <div class="ex-grid" id="exgrid"></div>
     </div>
+    <div class="radwords" id="radwords" hidden></div>
     <button class="chip reveal" id="reveal" hidden>Reveal answer · R</button>
   </section>
 
@@ -237,6 +260,8 @@
     <span class="srsstatus" id="srsstatus"></span>
     <button class="gbtn yes" id="grade-yes" title="Knew it — comes back in 1, 3, 8… days">✓ Knew it<kbd>2</kbd></button>
   </div>
+  <div class="goal" id="goal"></div>
+  <audio id="player" preload="auto" playsinline></audio>
 
   <div class="panel">
     <div class="row" id="lessonrow">
@@ -253,6 +278,7 @@
           <button class="chip" data-q="off" aria-pressed="true" title="Hear the word, then its meaning">Listen</button>
           <button class="chip" data-q="en2zh" title="See and hear the English, say the Chinese before it's revealed">Quiz: English → 中文</button>
           <button class="chip" data-q="listen" title="Hear only the Chinese, guess the meaning before it's revealed">Quiz: audio → meaning</button>
+          <button class="chip" data-q="cloze" id="q-cloze" title="See the example sentence with a gap and guess the missing word">Quiz: fill the gap</button>
         </div>
       </div>
     </div>
@@ -292,10 +318,24 @@
       <div class="ctl">
         <div class="chips">
           <button class="chip" id="english" aria-pressed="true">Read English</button>
+          <button class="chip" id="tones" aria-pressed="true" title="Colour pinyin by tone: 1 red, 2 orange, 3 green, 4 blue, neutral grey">Tone colours</button>
+          <button class="chip" id="clips" aria-pressed="true" hidden title="Use the recorded audio files instead of the device voice">Recorded audio</button>
           <button class="chip" id="slowfirst" aria-pressed="false" title="First repetition at 0.6× speed, then normal speed">Slow first</button>
           <button class="chip" id="example-toggle" aria-pressed="false">Example sentence</button>
           <button class="chip" id="shuffle" aria-pressed="false">Shuffle</button>
         </div>
+      </div>
+    </div>
+    <div class="row">
+      <label>Daily goal</label>
+      <div class="ctl">
+        <div class="seg" id="goalseg">
+          <button class="chip" data-goal="10">10</button>
+          <button class="chip" data-goal="20" aria-pressed="true">20</button>
+          <button class="chip" data-goal="30">30</button>
+          <button class="chip" data-goal="50">50</button>
+        </div>
+        <span class="val" style="text-align:left;color:var(--paper-dim)">ratings / day</span>
       </div>
     </div>
     <div class="row">
@@ -317,9 +357,11 @@
     </div>
   </div>
 
-  <p class="hint" id="hint">Tip: tap the card or press <b>Space</b> to play/pause · <b>← →</b> skip · <b>1</b> / <b>2</b> rate ✗ / ✓ · <b>R</b> reveal in quiz mode. Your ratings and settings are saved in this browser.</p>
+  <p class="hint" id="hint">Tip: tap the card or press <b>Space</b> to play/pause · <b>← →</b> skip · <b>1</b> / <b>2</b> rate ✗ / ✓ · <b>R</b> reveal in quiz mode. Your ratings and settings are saved in this browser. Press <b>/</b> to search.</p>
+  <p class="audionote" id="audionote" hidden>Recorded audio found — playback keeps going with the screen locked and shows lock-screen controls.</p>
 
   <div class="listhead"><h2 id="listtitle">Words · tap to jump</h2><span class="stats" id="stats"></span></div>
+  <div class="searchrow"><input id="search" type="search" placeholder="Search all words — 想, xiang or miss" autocomplete="off" spellcheck="false"><span class="searchnote" id="searchnote"></span></div>
   <ul class="wlist" id="wlist"></ul>
 </div>
 
@@ -329,4 +371,6 @@
 <script src="lessons.js"></script>
 <script src="meta.js"></script>
 <script src="radicals.js"></script>
+<script src="words-2.js"></script>
+<script src="audio/manifest.js"></script>
 <script src="app.js"></script>

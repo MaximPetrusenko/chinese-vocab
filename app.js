@@ -22,11 +22,62 @@ const card  = i => isRad()
 const radRank = i => RAD_RANK[RADICALS[i][0]] ?? 99;
 const tierOf = i => isRad() ? (radRank(i) < 13 ? 1 : radRank(i) < 27 ? 2 : 3) : (FREQ[WORDS[i][0]] || 2);
 const freqKey = i => isRad() ? radRank(i) : tierOf(i)*1e4 + i;
+// character → radical index (dictionary radical, plus each radical card's example characters)
+const CHAR_RAD = {};
+RADICALS.forEach((r,ri)=>{ (RAD_CHARS[r[0]]||"").split("").forEach(ch=>{ if(!(ch in CHAR_RAD)) CHAR_RAD[ch]=ri; }); });
+RADICALS.forEach((r,ri)=>r[4].forEach(e=>{ if(!(e[0] in CHAR_RAD)) CHAR_RAD[e[0]]=ri; }));
+const RAD_WORDS = RADICALS.map(()=>[]);
+WORDS.forEach((w,wi)=>{ const seen=new Set(); [...w[0]].forEach(ch=>{ const ri=CHAR_RAD[ch]; if(ri!==undefined && !seen.has(ri)){ seen.add(ri); RAD_WORDS[ri].push(wi); } }); });
 const stars  = t => "★★★".slice(0, 4-t);
 
 const POS = {};
 Object.entries(POS_GROUPS).forEach(([p,s])=>s.split(" ").forEach(w=>{ if(w) POS[w]=p; }));
 const posOf = i => POS[WORDS[i][0]] || "n";
+
+/* ---------- tone colours: split pinyin into syllables, colour each by its tone ---------- */
+const PY_INI = ["","b","p","m","f","d","t","n","l","g","k","h","j","q","x","zh","ch","sh","r","z","c","s","y","w"];
+const PY_FIN = ["a","o","e","ai","ei","ao","ou","an","en","ang","eng","ong","er","i","ia","ie","iao","iu","ian","in","iang","ing","iong","u","ua","uo","uai","ui","uan","un","uang","ue","v","ve"];
+const PY_SYL = new Set(); PY_INI.forEach(a=>PY_FIN.forEach(b=>PY_SYL.add(a+b)));
+const TONE_MARK = {}; [[0x304,1],[0x301,2],[0x30c,3],[0x300,4]].forEach(([c,t])=>{ TONE_MARK[String.fromCharCode(c)] = t; });
+const NBSP = String.fromCharCode(160);
+const COMBINING = new RegExp("["+String.fromCharCode(0x300)+"-"+String.fromCharCode(0x36f)+"]","g");
+function pyChar(ch){
+  const d = ch.normalize("NFD");
+  let tone = 0; for(const m of d.slice(1)) if(TONE_MARK[m]) tone = TONE_MARK[m];
+  return { base: d[0].toLowerCase(), tone };
+}
+function toneSegments(run){                 // run = letters only; returns [[start,end,tone],...] or null
+  const cs = [...run].map(pyChar), n = cs.length, best = Array(n+1).fill(null); best[0] = {cost:0, seg:[]};
+  for(let i=0;i<n;i++){
+    if(!best[i]) continue;
+    for(let L=1; L<=6 && i+L<=n; L++){
+      const syl = cs.slice(i,i+L).map(c=>c.base).join("");
+      const tones = cs.slice(i,i+L).map(c=>c.tone).filter(Boolean);
+      let cost;
+      if(syl === "r" && i > 0) cost = 0.6;                       // erhua: 点儿 → diǎnr
+      else if(PY_SYL.has(syl) && tones.length <= 1) cost = 1 + (i>0 && /^[aeo]/.test(syl) ? 0.5 : 0);
+      else continue;
+      const c = best[i].cost + cost;
+      if(!best[i+L] || c < best[i+L].cost) best[i+L] = { cost:c, seg: best[i].seg.concat([[i, i+L, tones[0] || 5]]) };
+    }
+  }
+  return best[n] ? best[n].seg : null;
+}
+function toneHTML(py){
+  if(!settings.tones) return esc(py);
+  const chars = [...py]; let out = "", i = 0;
+  while(i < chars.length){
+    if(/[a-zA-ZüÜ]/.test(pyChar(chars[i]).base)){
+      let j = i; while(j < chars.length && /[a-zA-ZüÜ]/.test(pyChar(chars[j]).base)) j++;
+      const run = chars.slice(i,j).join(""), seg = toneSegments(run);
+      if(seg) seg.forEach(([a,b,t])=>{ out += '<span class="t'+t+'">'+esc(chars.slice(i+a,i+b).join(""))+'</span>'; });
+      else out += esc(run);
+      i = j;
+    } else { out += esc(chars[i]); i++; }
+  }
+  return out;
+}
+const plainPy = s => s.normalize("NFD").replace(COMBINING,"").replace(/[^a-z]/gi,"").toLowerCase();
 
 /* ---------- storage (survives reloads; wrapped because file:// and private mode can throw) ---------- */
 const store = {
@@ -58,6 +109,18 @@ function grade(i, ok){
   s.last = ok ? 1 : 0; s.t = now;
   srs[k] = s;
   store.set(SRS_KEY, srs);
+  const day = dayKey(new Date()); days[day] = (days[day]||0) + 1; store.set(DAYS_KEY, days);
+}
+/* ---------- daily goal + streak ---------- */
+const DAYS_KEY = "ting.days.v1";
+let days = {};
+function dayKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function streakInfo(){
+  const goal = settings.goal, d = new Date(), today = days[dayKey(d)] || 0;
+  if(today < goal) d.setDate(d.getDate()-1);          // today not done yet: streak can still continue
+  let streak = 0;
+  while((days[dayKey(d)] || 0) >= goal){ streak++; d.setDate(d.getDate()-1); }
+  return { today, goal, streak, met: today >= goal };
 }
 const isNew  = i => !stateOf(i);
 const isDue  = i => { const s = stateOf(i); return !!s && s.due <= Date.now(); };
@@ -77,7 +140,7 @@ function statusOf(i){
 
 /* ---------- settings (persisted) ---------- */
 const DEFAULTS = { rate:0.8, repeat:2, gap:1.2, think:1.5, english:true, example:false, shuffle:false,
-                   byFreq:false, slowFirst:false, quiz:"off", lesson:"__all__", voice:"", tab:"vocab" };
+                   byFreq:false, slowFirst:false, quiz:"off", lesson:"__all__", voice:"", tab:"vocab", tones:true, goal:20, clips:true };
 const settings = Object.assign({}, DEFAULTS, store.get(SET_KEY, {}) || {});
 const saveSettings = () => store.set(SET_KEY, settings);
 
@@ -154,6 +217,7 @@ function reshuffle(){
 
 function applyLesson(){
   order = selectionFor(currentLesson);
+  if(!isRad() && settings.quiz === "cloze") order = order.filter(canCloze);
   if(settings.byFreq && (isRad() || currentLesson !== "__due")) sortByFreq();
   if(settings.shuffle) reshuffle();
   pos = 0; revealedFor = -1;
@@ -247,18 +311,31 @@ $("gender").addEventListener("click", e=>{
 });
 
 /* ---------- rendering ---------- */
-const masked = () => settings.quiz !== "off" && order.length && revealedFor !== idx();
+const quizMode = () => (isRad() && settings.quiz === "cloze") ? "en2zh" : settings.quiz;
+const masked = () => quizMode() !== "off" && order.length && revealedFor !== idx();
+const zhChunksOf = t => t.split(/……|…|\/|\.\.\./).map(x=>x.trim()).filter(Boolean);
+const canCloze = i => { const ex = EXAMPLES[i]; return !!ex && zhChunksOf(WORDS[i][0]).every(ch=>ex[0].includes(ch)); };
+const clozeText = i => { let t = EXAMPLES[i][0]; zhChunksOf(WORDS[i][0]).forEach(ch=>{ t = t.replace(ch, "＿＿"); }); return t; };
+function linkChars(zh){
+  return [...zh].map(ch=>{
+    const ri = CHAR_RAD[ch];
+    if(ri === undefined) return esc(ch);
+    const r = RADICALS[ri];
+    return '<span class="rlink" data-ri="'+ri+'" title="'+esc(ch+" — radical "+r[0]+" ("+r[2].split(" / ")[0]+") · tap to open")+'">'+esc(ch)+'</span>';
+  }).join("");
+}
 
 function renderMore(w){
   const a = ALT[w[0]];
   if(!a){ moreBox.hidden = true; moreBox.innerHTML = ""; return; }
   moreBox.innerHTML = '<div class="more-note">'+esc(a.note)+'</div>' +
-    a.ex.map(e=>'<div class="more-ex"><span class="mz">'+esc(e[0])+'</span> <span class="mp">'+esc(e[1])+'</span> <span class="me">'+esc(e[2])+'</span></div>').join("");
+    a.ex.map(e=>'<div class="more-ex"><span class="mz">'+esc(e[0])+'</span> <span class="mp">'+toneHTML(e[1])+'</span> <span class="me">'+esc(e[2])+'</span></div>').join("");
   moreBox.hidden = false;
 }
 
 function render(){
   const tierEl = $("tier");
+  $("radwords").hidden = true;
   if(!order.length){
     han.textContent = "—"; han.classList.remove("masked");
     pinyin.textContent = ""; gloss.classList.remove("masked");
@@ -269,12 +346,15 @@ function render(){
     cur.textContent = 0; $("total").textContent = 0; pbar.style.width = "0%";
     return;
   }
-  const i = idx(), c = card(i), m = masked();
-  const hideEn = m && settings.quiz === "listen";
-  han.textContent = m ? "？" : c.zh;
+  const i = idx(), c = card(i), m = masked(), q = quizMode();
+  const hideEn = m && (q === "listen" || q === "cloze");
+  if(m) han.textContent = "？";
+  else if(isRad()) han.textContent = c.zh;
+  else han.innerHTML = linkChars(c.zh);
   han.classList.toggle("masked", !!m);
-  pinyin.textContent = m ? " " : c.py;
-  gloss.textContent = hideEn ? "Listen — what does it mean?" : c.en;
+  if(m) pinyin.textContent = NBSP; else pinyin.innerHTML = toneHTML(c.py);
+  pinyin.classList.toggle("toned", !!settings.tones);
+  gloss.textContent = !hideEn ? c.en : q === "cloze" ? "Fill the gap — which word fits?" : "Listen — what does it mean?";
   gloss.classList.toggle("masked", hideEn);
   const t = tierOf(i); tierEl.textContent = stars(t); tierEl.title = TIER_LABEL[t]; tierEl.dataset.t = t;
 
@@ -284,12 +364,16 @@ function render(){
     $("variants").hidden = m || !r[3];
     $("vforms").textContent = r[3] ? r[3].split("").join("  ") : "";
     $("grows").hidden = !!m;
-    $("exgrid").innerHTML = r[4].map(e=>'<div class="ex"><div class="ec">'+e[0]+'</div><div class="ep">'+e[1]+'</div><div class="em">'+esc(e[2])+'</div></div>').join("");
+    $("exgrid").innerHTML = r[4].map(e=>'<div class="ex"><div class="ec">'+e[0]+'</div><div class="ep toned">'+toneHTML(e[1])+'</div><div class="em">'+esc(e[2])+'</div></div>').join("");
+    renderRadWords(i, m);
   } else {
     $("variants").hidden = true; $("grows").hidden = true;
     const ex = EXAMPLES[i];
-    if(settings.example && ex && !m){
-      exzh.textContent=ex[0]; expy.textContent=ex[1]; exen.textContent=ex[2];
+    if(m && q === "cloze" && ex){
+      exzh.textContent = clozeText(i); expy.textContent = NBSP; exen.textContent = ex[2];
+      exampleBox.hidden = false;
+    } else if(ex && (settings.example || (q === "cloze" && !m))){
+      exzh.textContent=ex[0]; expy.innerHTML=toneHTML(ex[1]); exen.textContent=ex[2];
       exampleBox.hidden=false;
     } else exampleBox.hidden=true;
     exampleBox.classList.remove("speaking");
@@ -301,7 +385,19 @@ function render(){
   cur.textContent = pos+1;
   $("total").textContent = order.length;
   pbar.style.width = ((pos+1)/order.length*100)+"%";
-  [...wlist.children].forEach((li,p)=>li.classList.toggle("active", p===pos));
+  if(!searching()) [...wlist.children].forEach((li,p)=>li.classList.toggle("active", p===pos));
+  updateMediaSession();
+}
+
+function renderRadWords(ri, m){
+  const box = $("radwords"), list = RAD_WORDS[ri] || [];
+  if(m || !list.length){ box.hidden = true; return; }
+  const known = list.filter(wi=>{ const s = srs[WORDS[wi][0]]; return s && s.last === 1; });
+  const shown = list.slice().sort((a,b)=>(FREQ[WORDS[a][0]]||2)-(FREQ[WORDS[b][0]]||2) || a-b).slice(0,18);
+  box.innerHTML = '<div class="rw-head">In <b>'+list.length+'</b> of your words'+(known.length ? ' · you know <b>'+known.length+'</b>' : '')+'</div>' +
+    '<div class="rw-list">'+shown.map(wi=>'<button class="wchip'+(known.includes(wi)?' known':'')+'" data-wi="'+wi+'" title="'+esc(WORDS[wi][1]+" — "+WORDS[wi][2])+'">'+esc(WORDS[wi][0])+'</button>').join("")+
+    (list.length > shown.length ? '<span class="rw-more">+'+(list.length-shown.length)+' more</span>' : '')+'</div>';
+  box.hidden = false;
 }
 
 function setStatus(i){
@@ -317,9 +413,68 @@ function updateStats(){
   $("stats").textContent = rated
     ? rated+" rated · "+all.filter(isDue).length+" due · "+all.filter(isHard).length+" hard · "+(all.length-rated)+" new"
     : "Tap ✓ / ✗ on a card to start tracking what you know";
+  const g = streakInfo(), el = $("goal");
+  el.innerHTML = '<span class="g-bar"><span style="width:'+Math.min(100, g.today/g.goal*100)+'%"></span></span>' +
+    '<b>'+g.today+'</b> / '+g.goal+' reviews today'+(g.met ? ' ✓' : '') +
+    (g.streak ? ' · 🔥 '+g.streak+'-day streak' : '');
+  el.dataset.met = g.met;
 }
 
 function reveal(){ if(!order.length) return; revealedFor = idx(); render(); }
+
+/* ---------- recorded audio (optional audio/manifest.js) ---------- */
+// When audio/manifest.js exists (made by audio/make-audio.sh on a Mac), words are played from real
+// sound files through one <audio> element. Unlike the browser voice, this keeps going with the screen
+// locked and shows lock-screen controls. Anything without a clip falls back to the browser voice.
+const AUDIO = (typeof AUDIO_MANIFEST !== "undefined") ? AUDIO_MANIFEST : null;
+const player = $("player");
+const useClips = () => !!(AUDIO && settings.clips);
+const clipFor = (text, lang) => AUDIO && AUDIO.files[(lang.startsWith("zh") ? "zh|" : "en|") + text];
+let clipDone = null;
+function playClip(src, rate){
+  return new Promise(res=>{
+    let cap;
+    const done = ok => { if(clipDone !== done) return; clipDone = null; clearTimeout(cap); res(ok); };
+    clipDone = done;
+    player.onended = ()=>done(true);
+    player.onerror = ()=>done(false);
+    player.defaultPlaybackRate = rate;
+    player.src = src;
+    player.playbackRate = rate;
+    try{ player.preservesPitch = true; }catch(e){}
+    const p = player.play(); if(p && p.catch) p.catch(()=>done(false));
+    cap = setTimeout(()=>done(false), 30000);
+  });
+}
+const silenceCache = {};
+function silenceURL(ms){                       // tiny silent WAV built in memory, so pauses don't need timers
+  if(silenceCache[ms]) return silenceCache[ms];
+  const rate = 8000, n = Math.round(rate*ms/1000), buf = new ArrayBuffer(44+n), v = new DataView(buf);
+  const str = (o,s)=>{ for(let k=0;k<s.length;k++) v.setUint8(o+k, s.charCodeAt(k)); };
+  str(0,"RIFF"); v.setUint32(4,36+n,true); str(8,"WAVE"); str(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true);
+  v.setUint16(22,1,true); v.setUint32(24,rate,true); v.setUint32(28,rate,true); v.setUint16(32,1,true); v.setUint16(34,8,true);
+  str(36,"data"); v.setUint32(40,n,true); for(let k=0;k<n;k++) v.setUint8(44+k,128);
+  return silenceCache[ms] = URL.createObjectURL(new Blob([buf], {type:"audio/wav"}));
+}
+async function playSilence(ms){
+  for(const d of [2000,1000,500,250,100]){ while(ms >= d){ if(!playing) return; await playClip(silenceURL(d), 1); ms -= d; } }
+}
+function updateMediaSession(){
+  if(!("mediaSession" in navigator) || typeof MediaMetadata === "undefined" || !order.length) return;
+  try{
+    const c = card(idx());
+    navigator.mediaSession.metadata = new MediaMetadata({ title: c.zh+"  "+c.py, artist: c.en,
+      album: isRad() ? "部首 Radicals" : (currentLesson.startsWith("__") ? "听 Vocabulary" : currentLesson) });
+  }catch(e){}
+}
+if("mediaSession" in navigator){
+  try{
+    navigator.mediaSession.setActionHandler("play", ()=>{ if(!playing) loop(); });
+    navigator.mediaSession.setActionHandler("pause", ()=>{ if(playing) stop(); });
+    navigator.mediaSession.setActionHandler("nexttrack", ()=>$("next").click());
+    navigator.mediaSession.setActionHandler("previoustrack", ()=>$("prev").click());
+  }catch(e){}
+}
 
 /* ---------- speech engine ---------- */
 // Speak once. We confirm it actually produced sound by watching both the
@@ -357,8 +512,14 @@ function speakOnce(text, lang, rate){
     cap = setTimeout(()=>finish(started), 9000 + text.length*450);
   });
 }
-// Retry once only if the word made no sound at all.
+// Retry once only if the word made no sound at all. Recorded clips are used first when available.
 async function speak(text, lang, rate){
+  const clip = useClips() && clipFor(text, lang);
+  if(clip){
+    const g0 = gen;
+    const ok = await playClip((AUDIO.base||"") + clip, Math.max(0.5, Math.min(1.6, rate/0.8)));
+    if(ok || gen !== g0) return ok;           // stopped mid-clip: don't fall back to the device voice
+  }
   let ok = await speakOnce(text, lang, rate);
   if(!ok){
     speechSynthesis.cancel();
@@ -367,7 +528,7 @@ async function speak(text, lang, rate){
   }
   return ok;
 }
-const wait = ms => new Promise(r=>setTimeout(r,ms));
+const wait = ms => (useClips() && playing) ? playSilence(ms) : new Promise(r=>setTimeout(r,ms));
 
 // Patterns like 不是……而是…… and alternatives like 喝茶/咖啡 are spoken as separate chunks.
 const zhChunks = text => text.split(/……|…|\/|\.\.\./).map(s=>s.trim()).filter(Boolean);
@@ -410,12 +571,25 @@ async function loop(){
     const enRate = Math.max(0.9, settings.rate);
     const think = () => wait(settings.think*1000);
 
-    if(settings.quiz === "en2zh"){                 // English → guess the Chinese
+    const q = quizMode();
+    let spokeExample = false;
+    if(q === "cloze" && !isRad() && EXAMPLES[i]){     // sentence with a gap → guess the word
+      const ex = EXAMPLES[i];
+      if(enVoice){ await speak(enText(ex[2]), "en-US", enRate); if(!alive(my)) return; }
+      await think(); if(!alive(my)) return;
+      reveal();
+      if(!await sayChinese(i, my)) return;
+      await wait(300); if(!alive(my)) return;
+      exampleBox.classList.add("speaking");
+      await speak(ex[0].replace(/[…．]+/g," "), "zh-CN", settings.rate); if(!alive(my)) return;
+      exampleBox.classList.remove("speaking");
+      spokeExample = true;
+    } else if(q === "en2zh"){                 // English → guess the Chinese
       if(enVoice){ await speak(enText(w[2]), "en-US", enRate); if(!alive(my)) return; }
       await think(); if(!alive(my)) return;
       reveal();
       if(!await sayChinese(i, my)) return;
-    } else if(settings.quiz === "listen"){         // audio only → guess the meaning
+    } else if(q === "listen"){         // audio only → guess the meaning
       if(!await sayChinese(i, my)) return;
       await think(); if(!alive(my)) return;
       reveal();
@@ -443,7 +617,7 @@ async function loop(){
       if(!alive(my)) return;
     }
     const ex = isRad() ? null : EXAMPLES[i];
-    if(settings.example && ex){
+    if(settings.example && ex && !spokeExample){
       await wait(300);
       if(!alive(my)) return;
       exampleBox.classList.add("speaking");
@@ -475,7 +649,7 @@ function setIcon(){
   $("play").setAttribute("aria-label", playing?"Pause":"Play");
   seal.classList.toggle("live", playing);
 }
-function stop(){ playing=false; gen++; speechSynthesis.cancel(); setIcon(); }
+function stop(){ playing=false; gen++; speechSynthesis.cancel(); try{ player.pause(); }catch(e){} if(clipDone) clipDone(false); setIcon(); }
 function toggle(){ if(playing) stop(); else loop(); }
 
 /* keep Chrome from cutting speech off after ~15s */
@@ -507,7 +681,7 @@ function rateCurrent(ok){
 
 /* ---------- controls ---------- */
 $("play").onclick = toggle;
-$("stage").onclick = e=>{ if(e.target.closest && e.target.closest("button,.more")) return; toggle(); };
+$("stage").onclick = e=>{ if(e.target.closest && e.target.closest("button,.more,.rlink,.radwords")) return; toggle(); };
 $("stage").onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle();} };
 $("next").onclick = ()=>{ const was=playing; stop(); advance(1); render(); if(was) loop(); };
 $("prev").onclick = ()=>{ const was=playing; stop(); advance(-1); render(); if(was) loop(); };
@@ -526,15 +700,84 @@ $("repeat").addEventListener("click", e=>{
 });
 $("quizmode").addEventListener("click", e=>{
   const b=e.target.closest("[data-q]"); if(!b) return;
+  const was = playing; stop();
+  const keep = order.length ? idx() : -1, wasCloze = settings.quiz === "cloze";
   settings.quiz=b.dataset.q; saveSettings();
   [...e.currentTarget.children].forEach(c=>c.setAttribute("aria-pressed", c===b));
+  if(wasCloze !== (settings.quiz === "cloze")){ applyLesson(); const p = order.indexOf(keep); if(p >= 0){ pos = p; } }
   revealedFor=-1; render();
+  if(was) loop();
 });
 function toggleChip(el,key){
   const on = el.getAttribute("aria-pressed")!=="true";
   el.setAttribute("aria-pressed", on); settings[key]=on; saveSettings();
 }
 $("english").onclick = ()=>toggleChip($("english"),"english");
+$("tones").onclick = ()=>{ toggleChip($("tones"),"tones"); if(searching()) buildSearch(); else buildList(); render(); };
+$("clips").onclick = ()=>{ const was=playing; stop(); toggleChip($("clips"),"clips"); if(was) loop(); };
+$("goalseg").addEventListener("click", e=>{
+  const b=e.target.closest("[data-goal]"); if(!b) return;
+  settings.goal=+b.dataset.goal; saveSettings();
+  [...e.currentTarget.children].forEach(c=>c.setAttribute("aria-pressed", c===b));
+  updateStats();
+});
+
+/* jump to a vocabulary word from anywhere (search, radical cards) */
+function jumpToWord(wi){
+  const was = playing; stop();
+  if(isRad()) setTab("vocab");
+  let p = order.indexOf(wi);
+  if(p < 0){ currentLesson = "__all__"; settings.lesson = currentLesson; saveSettings(); $("lesson").value = "__all__"; applyLesson(); p = order.indexOf(wi); }
+  if(p < 0){ settings.quiz = "off"; saveSettings(); syncControls(); applyLesson(); p = order.indexOf(wi); }
+  pos = Math.max(0,p); revealedFor = -1; render();
+  window.scrollTo({top:0, behavior:"smooth"});
+  if(was) loop();
+}
+function jumpToRadical(ri){
+  const was = playing; stop();
+  if(!isRad()) setTab("radicals");
+  pos = Math.max(0, order.indexOf(ri)); revealedFor = -1; render();
+  if(was) loop();
+}
+han.addEventListener("click", e=>{
+  const l = e.target.closest && e.target.closest(".rlink"); if(!l) return;
+  e.stopPropagation(); jumpToRadical(+l.dataset.ri);
+});
+$("radwords").addEventListener("click", e=>{
+  const b = e.target.closest && e.target.closest("[data-wi]"); if(!b) return;
+  e.stopPropagation(); jumpToWord(+b.dataset.wi);
+});
+
+/* search the whole deck of the current tab */
+const searching = () => $("search").value.trim() !== "";
+function searchHits(q){
+  const qq = q.trim().toLowerCase(), qp = plainPy(q);
+  const hits = [];
+  range().forEach(i=>{
+    const c = card(i);
+    const score = c.zh.includes(q.trim()) ? 0 : (qp && plainPy(c.py).startsWith(qp)) ? 1 : (qp && plainPy(c.py).includes(qp)) ? 2 : c.en.toLowerCase().includes(qq) ? 3 : -1;
+    if(score >= 0) hits.push([score, i]);
+  });
+  return hits.sort((a,b)=>a[0]-b[0] || a[1]-b[1]).slice(0, 80).map(h=>h[1]);
+}
+function buildSearch(){
+  const hits = searchHits($("search").value);
+  wlist.innerHTML = "";
+  $("searchnote").textContent = hits.length ? hits.length+(hits.length===80?"+":"")+" match"+(hits.length===1?"":"es")+" · tap to open" : "No matches";
+  hits.forEach(wi=>{
+    const c = card(wi), li = document.createElement("li");
+    li.tabIndex = 0; li.dataset.s = statusOf(wi).cls;
+    li.innerHTML = '<span class="lz">'+esc(c.zh)+'</span><span class="lt" data-t="'+tierOf(wi)+'">'+stars(tierOf(wi))+'</span><span class="lp">'+(isRad() ? esc(c.en.split(" / ")[0]) : toneHTML(c.py)+' · '+esc(c.en))+'</span>';
+    const go = ()=>{ $("search").value = ""; $("searchnote").textContent = ""; if(isRad()) jumpToRadical(wi); else jumpToWord(wi); buildList(); render(); };
+    li.onclick = go; li.onkeydown = e=>{ if(e.key==="Enter"){ e.preventDefault(); go(); } };
+    wlist.appendChild(li);
+  });
+}
+$("search").addEventListener("input", ()=>{ if(searching()) buildSearch(); else { $("searchnote").textContent = ""; buildList(); render(); } });
+$("search").addEventListener("keydown", e=>{
+  if(e.key === "Escape"){ $("search").value = ""; $("searchnote").textContent = ""; buildList(); render(); $("search").blur(); }
+  if(e.key === "Enter" && searching()){ const first = wlist.children[0]; if(first) first.click(); }
+});
 $("slowfirst").onclick = ()=>toggleChip($("slowfirst"),"slowFirst");
 $("example-toggle").onclick = ()=>{ toggleChip($("example-toggle"),"example"); render(); };
 function setFreq(on){
@@ -566,7 +809,8 @@ $("lesson").addEventListener("change", e=>{
 
 document.addEventListener("keydown", e=>{
   const tag = e.target.tagName;
-  if(tag==="SELECT" || tag==="INPUT") return;
+  if(tag==="SELECT" || tag==="INPUT" || tag==="TEXTAREA") return;
+  if(e.key==="/" ){ e.preventDefault(); $("search").focus(); return; }
   if(e.key===" "){e.preventDefault();toggle();}
   else if(e.key==="ArrowRight") $("next").click();
   else if(e.key==="ArrowLeft") $("prev").click();
@@ -577,13 +821,14 @@ document.addEventListener("keydown", e=>{
 
 /* ---------- word list ---------- */
 function buildList(){
+  if(searching()){ buildSearch(); return; }
   wlist.innerHTML="";
   order.forEach((wi,p)=>{
     const c = card(wi);
     const li=document.createElement("li");
     li.tabIndex=0;
     li.dataset.s = statusOf(wi).cls;
-    li.innerHTML=`<span class="n">${p+1}</span><span class="lz">${c.zh}</span><span class="lt" data-t="${tierOf(wi)}">${stars(tierOf(wi))}</span><span class="lp">${isRad() ? esc(c.en.split(" / ")[0]) : c.py}</span>`;
+    li.innerHTML=`<span class="n">${p+1}</span><span class="lz">${c.zh}</span><span class="lt" data-t="${tierOf(wi)}">${stars(tierOf(wi))}</span><span class="lp">${isRad() ? esc(c.en.split(" / ")[0]) : toneHTML(c.py)}</span>`;
     const jump=()=>{ const was=playing; stop(); pos=p; revealedFor=-1; render(); if(was) loop(); };
     li.onclick=jump;
     li.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();jump();} };
@@ -606,6 +851,9 @@ function setTab(t){
   $("listtitle").textContent = rad ? "Radicals · tap to jump" : "Words · tap to jump";
   $("example-toggle").textContent = rad ? "Example characters" : "Example sentence";
   $("radlead").hidden = !rad;
+  $("q-cloze").hidden = rad;
+  $("search").placeholder = rad ? "Search radicals — 心, xin or heart" : "Search all words — 想, xiang or miss";
+  if(searching()){ $("search").value = ""; $("searchnote").textContent = ""; }
   document.title = rad ? "部首 · Chinese Radicals" : "听 · Chinese Vocabulary Loop";
   buildLessonMenu();
   applyLesson();
@@ -630,6 +878,11 @@ function syncControls(){
   $("shuffle").setAttribute("aria-pressed", settings.shuffle);
   $("freqtab").setAttribute("aria-pressed", settings.byFreq);
   $("slowfirst").setAttribute("aria-pressed", settings.slowFirst);
+  $("tones").setAttribute("aria-pressed", settings.tones);
+  $("clips").setAttribute("aria-pressed", settings.clips);
+  $("clips").hidden = !AUDIO;
+  $("audionote").hidden = !AUDIO;
+  [...$("goalseg").children].forEach(c=>c.setAttribute("aria-pressed", +c.dataset.goal===settings.goal));
 }
 
 // refresh due counts once a minute (skipped while the menu is focused so it doesn't close on you)
@@ -639,6 +892,7 @@ setInterval(()=>{
   if(!playing && order.length) setStatus(idx());
 }, 60000);
 
+days = store.get(DAYS_KEY, {}) || {};
 if(location.hash==="#radicals") settings.tab = "radicals";
 if(location.hash==="#vocab")    settings.tab = "vocab";
 if(location.hash==="#frequency") settings.byFreq = true;
