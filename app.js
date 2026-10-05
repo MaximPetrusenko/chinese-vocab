@@ -30,6 +30,20 @@ const RAD_WORDS = RADICALS.map(()=>[]);
 WORDS.forEach((w,wi)=>{ const seen=new Set(); [...w[0]].forEach(ch=>{ const ri=CHAR_RAD[ch]; if(ri!==undefined && !seen.has(ri)){ seen.add(ri); RAD_WORDS[ri].push(wi); } }); });
 const stars  = t => "★★★".slice(0, 4-t);
 
+/* ---------- confusable pairs ---------- */
+// Each pair gives two drill items: one sentence per word. Items reference word indices so ratings land on the real words.
+const WORD_IDX = {}; WORDS.forEach((w,i)=>{ WORD_IDX[w[0]] = i; });
+const PAIR_ITEMS = [];
+PAIRS.forEach((p,pi)=>{
+  const a = WORD_IDX[p[0]], b = WORD_IDX[p[1]];
+  if(a === undefined || b === undefined) return;
+  PAIR_ITEMS.push({ pi, target:a, other:b, sent:p[3], note:p[2] });
+  PAIR_ITEMS.push({ pi, target:b, other:a, sent:p[4], note:p[2] });
+});
+let pairMode = false;                       // true while the "Confusable pairs" list is selected
+let pairAnswer = null;                      // "right" | "wrong" after the user picks
+const pairItem = () => pairMode && order.length ? PAIR_ITEMS[order[pos]] : null;
+
 const POS = {};
 Object.entries(POS_GROUPS).forEach(([p,s])=>s.split(" ").forEach(w=>{ if(w) POS[w]=p; }));
 const posOf = i => POS[WORDS[i][0]] || "n";
@@ -166,7 +180,8 @@ const STUDY = { __due:isDue, __hard:isHard, __new:isNew };
 const STUDY_NOTE = {
   __due:  "Words you've rated that are due again. ✓ clears a word until its next review; ✗ sends it to the back of the queue.",
   __hard: "Words you missed last time or keep forgetting. Get one right and it leaves this list.",
-  __new:  "Words you've never rated. Tap ✓ or ✗ on each to start tracking it."
+  __new:  "Words you've never rated. Tap ✓ or ✗ on each to start tracking it.",
+  __pairs:"Two words that are easy to mix up. Read the sentence and tap the word that fits — the answer is rated for you."
 };
 const EMPTY_NOTE = {
   __due:  "Nothing due right now. Rate words with ✓ / ✗ and they'll come back here on schedule.",
@@ -176,8 +191,48 @@ const EMPTY_NOTE = {
 const esc = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const opt = (v, label) => '<option value="'+esc(v)+'">'+esc(label)+'</option>';
 
+function lessonLabel(v){
+  if(v === "__all__") return "All lessons ("+WORDS.length+")";
+  const all = WORDS.map((_,i)=>i), n = f => all.filter(f).length;
+  if(v === "__due")  return "⟳ Review due ("+n(isDue)+")";
+  if(v === "__hard") return "✗ Hard words ("+n(isHard)+")";
+  if(v === "__new")  return "○ New — never rated ("+n(isNew)+")";
+  if(v === "__pairs") return "⚖ Confusable pairs ("+PAIR_ITEMS.length+")";
+  if(v.startsWith("__tier")) return TIER_LABEL[+v.slice(6)];
+  if(v.startsWith("__pos_")) return POS_LABEL[v.slice(6)];
+  const l = LESSON_SPEC.find(x=>x[0]===v); return l ? l[0]+" ("+l[1]+")" : v;
+}
+let openUnits = store.get("ting.picker.v1", {}) || {};
+function buildPicker(){
+  const all = WORDS.map((_,i)=>i), n = f => all.filter(f).length;
+  const item = (v, label, extra) => '<button class="pk-item'+(v===currentLesson?' on':'')+'" data-v="'+esc(v)+'">'+label+(extra!==undefined?'<span class="pk-n">'+extra+'</span>':'')+'</button>';
+  const unitOf = name => (UNITS.find(u=>u[1].includes(name))||[])[0];
+  const curUnit = unitOf(currentLesson);
+  let h = '<div class="pk-sec"><div class="pk-head">Study</div><div class="pk-grid">'
+    + item("__all__","All lessons",WORDS.length) + item("__due","⟳ Review due",n(isDue)) + item("__hard","✗ Hard words",n(isHard))
+    + item("__new","○ New",n(isNew)) + item("__pairs","⚖ Confusable pairs",PAIR_ITEMS.length) + '</div></div>';
+  h += '<div class="pk-sec"><div class="pk-head">Lessons</div>';
+  const listed = new Set();
+  UNITS.forEach(([u, names])=>{
+    const open = openUnits[u] || u === curUnit;
+    const cnt = names.reduce((a,nm)=>a+((LESSON_SPEC.find(l=>l[0]===nm)||[0,0])[1]),0);
+    h += '<details class="pk-unit"'+(open?' open':'')+' data-u="'+esc(u)+'"><summary>'+esc(u)+'<span class="pk-n">'+names.length+' lessons · '+cnt+'</span></summary>';
+    names.forEach(nm=>{ const l = LESSON_SPEC.find(x=>x[0]===nm); if(!l) return; listed.add(nm); h += item(nm, esc(nm), l[1]); });
+    h += '</details>';
+  });
+  const other = LESSON_SPEC.filter(l=>!listed.has(l[0]));
+  if(other.length){ h += '<details class="pk-unit"'+(openUnits.Other||other.some(l=>l[0]===currentLesson)?' open':'')+' data-u="Other"><summary>Other<span class="pk-n">'+other.length+'</span></summary>'; other.forEach(l=>{ h += item(l[0], esc(l[0]), l[1]); }); h += '</details>'; }
+  h += '</div>';
+  h += '<details class="pk-unit pk-filter"'+(openUnits.__freq||currentLesson.startsWith("__tier")?' open':'')+' data-u="__freq"><summary>By frequency<span class="pk-n">across all lessons</span></summary>'
+    + [1,2,3].map(t=>item("__tier"+t, TIER_LABEL[t], n(i=>tierOf(i)===t))).join("") + '</details>';
+  h += '<details class="pk-unit pk-filter"'+(openUnits.__pos||currentLesson.startsWith("__pos_")?' open':'')+' data-u="__pos"><summary>By word type<span class="pk-n">across all lessons</span></summary>'
+    + Object.keys(POS_LABEL).map(p=>{ const c=n(i=>posOf(i)===p); return c ? item("__pos_"+p, POS_LABEL[p], c) : ""; }).join("") + '</details>';
+  $("picker").innerHTML = h;
+}
 function buildLessonMenu(){
   if(isRad()) return;                    // radicals have no lesson menu
+  $("lessonbtn").textContent = lessonLabel(currentLesson);
+  if(!$("picker").hidden) buildPicker();
   const sel = $("lesson");
   const all = WORDS.map((_,i)=>i);
   const n = f => all.filter(f).length;
@@ -186,6 +241,7 @@ function buildLessonMenu(){
   o.push(opt("__due",  "⟳ Review due ("+n(isDue)+")"));
   o.push(opt("__hard", "✗ Hard words ("+n(isHard)+")"));
   o.push(opt("__new",  "○ New — never rated ("+n(isNew)+")"));
+  o.push(opt("__pairs", "⚖ Confusable pairs ("+PAIR_ITEMS.length+")"));
   o.push('</optgroup><optgroup label="Lessons">');
   LESSON_SPEC.forEach(([name,count])=>o.push(opt(name, name+" ("+count+")")));
   o.push('</optgroup><optgroup label="By frequency · across all lessons">');
@@ -205,18 +261,32 @@ function selectionFor(v){
   if(v === "__due")  return all.filter(isDue).sort((a,b)=>stateOf(a).due - stateOf(b).due);
   if(v === "__hard") return all.filter(isHard);
   if(v === "__new")  return all.filter(isNew);
+  if(v === "__pairs") return PAIR_ITEMS.map((_,k)=>k);
   if(v.startsWith("__tier")){ const t = +v.slice(6); return all.filter(i=>tierOf(i)===t); }
   if(v.startsWith("__pos_")){ const p = v.slice(6);  return all.filter(i=>posOf(i)===p); }
   return all.filter(i=>LESSONS[i]===v);
 }
 
 function sortByFreq(){ order.sort((a,b)=> freqKey(a)-freqKey(b)); }
+function reshufflePairs(){                 // shuffle, but keep the two items of one pair apart
+  reshuffle();
+  for(let i=1;i<order.length;i++) if(PAIR_ITEMS[order[i]].pi === PAIR_ITEMS[order[i-1]].pi){ const j=(i+1)%order.length; [order[i],order[j]]=[order[j],order[i]]; }
+}
 function reshuffle(){
   for(let i=order.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [order[i],order[j]]=[order[j],order[i]]; }
 }
 
 function applyLesson(){
+  pairMode = !isRad() && currentLesson === "__pairs";
+  pairAnswer = null;
+  $("moderow").hidden = pairMode;              // the Mode row doesn't apply to the pairs drill
+  $("grade-no").hidden = pairMode; $("grade-yes").hidden = pairMode;   // the two word buttons replace ✓/✗
   order = selectionFor(currentLesson);
+  if(pairMode){
+    reshufflePairs(); pos = 0; revealedFor = -1;
+    $("lessonnote").textContent = STUDY_NOTE.__pairs; $("lessonnote").hidden = false;
+    buildList(); render(); updateStats(); return;
+  }
   if(!isRad() && settings.quiz === "cloze") order = order.filter(canCloze);
   if(settings.byFreq && (isRad() || currentLesson !== "__due")) sortByFreq();
   if(settings.shuffle) reshuffle();
@@ -335,7 +405,7 @@ function renderMore(w){
 
 function render(){
   const tierEl = $("tier");
-  $("radwords").hidden = true;
+  $("radwords").hidden = true; $("pairbox").hidden = true;
   if(!order.length){
     han.textContent = "—"; han.classList.remove("masked");
     pinyin.textContent = ""; gloss.classList.remove("masked");
@@ -346,6 +416,7 @@ function render(){
     cur.textContent = 0; $("total").textContent = 0; pbar.style.width = "0%";
     return;
   }
+  if(pairMode){ renderPair(); return; }
   const i = idx(), c = card(i), m = masked(), q = quizMode();
   const hideEn = m && (q === "listen" || q === "cloze");
   if(m) han.textContent = "？";
@@ -389,6 +460,49 @@ function render(){
   updateMediaSession();
 }
 
+function renderPair(){
+  const it = pairItem(), t = WORDS[it.target], o = WORDS[it.other], p = PAIRS[it.pi];
+  const revealed = revealedFor === order[pos];
+  const first = p[0] === t[0];                      // keep the pair's natural order on the buttons
+  const left = first ? t : o, right = first ? o : t;
+  $("variants").hidden = true; $("grows").hidden = true; moreBox.hidden = true; $("reveal").hidden = true;
+  $("tier").textContent = ""; han.classList.remove("masked"); gloss.classList.remove("masked");
+  if(!revealed){
+    han.textContent = "？"; han.classList.add("masked");
+    pinyin.textContent = NBSP;
+    gloss.textContent = "Which word fits?";
+    exzh.textContent = it.sent[0]; expy.textContent = NBSP; exen.textContent = it.sent[2];
+  } else {
+    han.innerHTML = linkChars(t[0]); pinyin.innerHTML = toneHTML(t[1]); gloss.textContent = t[2];
+    exzh.textContent = it.sent[0].replace("＿＿", t[0]); expy.innerHTML = toneHTML(it.sent[1]); exen.textContent = it.sent[2];
+  }
+  exampleBox.hidden = false; exampleBox.classList.remove("speaking");
+  const btn = (w, side) => '<button class="pbtn'+(revealed ? (w===t ? " right" : (pairAnswer==="wrong" ? " wrong" : "")) : "")+'" data-side="'+side+'" '+(revealed?"disabled":"")+'>'
+    + '<span class="pz">'+esc(w[0])+'</span><span class="pp">'+toneHTML(w[1])+'</span><span class="pe">'+esc(w[2])+'</span></button>';
+  $("pairbox").innerHTML = '<div class="pair-btns">'+btn(left,"L")+btn(right,"R")+'</div>'
+    + (revealed ? '<div class="pair-note">'+(pairAnswer==="right" ? "✓ Right. " : pairAnswer==="wrong" ? "✗ Not this time. " : "")+esc(it.note)+'</div>' : "");
+  $("pairbox").hidden = false;
+  setStatus(it.target);
+  cur.textContent = pos+1; $("total").textContent = order.length;
+  pbar.style.width = ((pos+1)/order.length*100)+"%";
+  if(!searching()) [...wlist.children].forEach((li,q)=>li.classList.toggle("active", q===pos));
+  updateMediaSession();
+}
+function answerPair(side){
+  const it = pairItem(); if(!it || revealedFor === order[pos]) return;
+  const p = PAIRS[it.pi], picked = (side === "L") ? p[0] : p[1];
+  const ok = picked === WORDS[it.target][0];
+  pairAnswer = ok ? "right" : "wrong";
+  grade(it.target, ok);
+  const stage = $("stage");
+  stage.classList.remove("flash-yes","flash-no"); void stage.offsetWidth;
+  stage.classList.add(ok ? "flash-yes" : "flash-no");
+  setTimeout(()=>stage.classList.remove("flash-yes","flash-no"), 450);
+  revealedFor = order[pos];
+  buildLessonMenu(); render(); updateStats();
+  if(wlist.children[pos]) wlist.children[pos].dataset.s = statusOf(it.target).cls;
+  if(playing){ const my = ++gen; playing = true; (async()=>{ await speakZh(WORDS[it.target][0], settings.rate); if(!alive(my)) return; await wait(250); await speak(it.sent[0].replace("＿＿", WORDS[it.target][0]).replace(/[…．]+/g," "), "zh-CN", settings.rate); if(!alive(my)) return; await wait(settings.gap*1000); if(!alive(my)) return; advance(1); loop(); })(); }
+}
 function renderRadWords(ri, m){
   const box = $("radwords"), list = RAD_WORDS[ri] || [];
   if(m || !list.length){ box.hidden = true; return; }
@@ -539,7 +653,9 @@ async function speakZh(text, rate){
     if(j < parts.length-1) await wait(280);
   }
 }
-const enText = s => s.replace(/\.\.\.|…/g," ").replace(/\//g," or ");
+// Spoken English: only the first meaning ("To bring / to lead / to carry" → "To bring"),
+// the rest stays on screen. "tea/coffee" (no spaces) is still read as "tea or coffee".
+const enText = s => s.split(" / ")[0].replace(/\.\.\.|…/g," ").replace(/\//g," or ").replace(/\s+/g," ").trim();
 
 // Say the word `repeat` times; with "slow first" the first pass is at 0.6×.
 async function sayChinese(i, my){
@@ -567,6 +683,14 @@ async function loop(){
   while(alive(my)){
     if(!order.length){ stop(); return; }
     render();
+    if(pairMode){                                  // read the sentence with the gap, then wait for a tap
+      const it = pairItem();
+      if(revealedFor !== order[pos]){
+        if(enVoice){ await speak(enText(it.sent[2]), "en-US", Math.max(0.9, settings.rate)); }
+        return;                                    // loop resumes from answerPair()
+      }
+      await wait(settings.gap*1000); if(!alive(my)) return; advance(1); continue;
+    }
     const i = idx(), c = card(i), w = [c.zh, c.py, c.en];
     const enRate = Math.max(0.9, settings.rate);
     const think = () => wait(settings.think*1000);
@@ -637,7 +761,7 @@ async function loop(){
 }
 function advance(d){
   if(!order.length) return;
-  pos += d; revealedFor = -1;
+  pos += d; revealedFor = -1; pairAnswer = null;
   if(pos>=order.length){ pos=0; if(settings.shuffle) reshuffle(); }
   if(pos<0) pos=order.length-1;
 }
@@ -658,6 +782,7 @@ setInterval(()=>{ if(playing && speechSynthesis.speaking) speechSynthesis.resume
 /* ---------- rating ---------- */
 function rateCurrent(ok){
   if(!order.length) return;
+  if(pairMode){ answerPair(ok ? "R" : "L"); return; }   // in the drill, 1 = left word, 2 = right word
   const was = playing; stop();
   const i = idx();
   grade(i, ok);
@@ -681,7 +806,7 @@ function rateCurrent(ok){
 
 /* ---------- controls ---------- */
 $("play").onclick = toggle;
-$("stage").onclick = e=>{ if(e.target.closest && e.target.closest("button,.more,.rlink,.radwords")) return; toggle(); };
+$("stage").onclick = e=>{ if(e.target.closest && e.target.closest("button,.more,.rlink,.radwords,.pairbox")) return; toggle(); };
 $("stage").onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle();} };
 $("next").onclick = ()=>{ const was=playing; stop(); advance(1); render(); if(was) loop(); };
 $("prev").onclick = ()=>{ const was=playing; stop(); advance(-1); render(); if(was) loop(); };
@@ -726,7 +851,7 @@ $("goalseg").addEventListener("click", e=>{
 function jumpToWord(wi){
   const was = playing; stop();
   if(isRad()) setTab("vocab");
-  let p = order.indexOf(wi);
+  let p = pairMode ? -1 : order.indexOf(wi);
   if(p < 0){ currentLesson = "__all__"; settings.lesson = currentLesson; saveSettings(); $("lesson").value = "__all__"; applyLesson(); p = order.indexOf(wi); }
   if(p < 0){ settings.quiz = "off"; saveSettings(); syncControls(); applyLesson(); p = order.indexOf(wi); }
   pos = Math.max(0,p); revealedFor = -1; render();
@@ -743,6 +868,10 @@ han.addEventListener("click", e=>{
   const l = e.target.closest && e.target.closest(".rlink"); if(!l) return;
   e.stopPropagation(); jumpToRadical(+l.dataset.ri);
 });
+$("pairbox").addEventListener("click", e=>{
+  const b = e.target.closest && e.target.closest("[data-side]"); if(!b) return;
+  e.stopPropagation(); answerPair(b.dataset.side);
+});
 $("radwords").addEventListener("click", e=>{
   const b = e.target.closest && e.target.closest("[data-wi]"); if(!b) return;
   e.stopPropagation(); jumpToWord(+b.dataset.wi);
@@ -753,7 +882,7 @@ const searching = () => $("search").value.trim() !== "";
 function searchHits(q){
   const qq = q.trim().toLowerCase(), qp = plainPy(q);
   const hits = [];
-  range().forEach(i=>{
+  (pairMode ? WORDS.map((_,i)=>i) : range()).forEach(i=>{
     const c = card(i);
     const score = c.zh.includes(q.trim()) ? 0 : (qp && plainPy(c.py).startsWith(qp)) ? 1 : (qp && plainPy(c.py).includes(qp)) ? 2 : c.en.toLowerCase().includes(qq) ? 3 : -1;
     if(score >= 0) hits.push([score, i]);
@@ -799,18 +928,38 @@ $("shuffle").onclick = ()=>{
   render();
 };
 
-$("lesson").addEventListener("change", e=>{
+function chooseLesson(v){
   const was = playing; stop();
-  currentLesson = e.target.value;
+  currentLesson = v; $("lesson").value = v;
   settings.lesson = currentLesson; saveSettings();
-  applyLesson();
+  buildLessonMenu(); applyLesson();
   if(was) loop();
+}
+$("lesson").addEventListener("change", e=>chooseLesson(e.target.value));
+$("lessonbtn").onclick = ()=>{
+  const pk = $("picker"), open = pk.hidden;
+  if(open){ buildPicker(); pk.hidden = false; $("lessonbtn").setAttribute("aria-expanded","true"); }
+  else { pk.hidden = true; $("lessonbtn").setAttribute("aria-expanded","false"); }
+};
+$("picker").addEventListener("click", e=>{
+  const b = e.target.closest && e.target.closest("[data-v]");
+  if(b){ chooseLesson(b.dataset.v); $("picker").hidden = true; $("lessonbtn").setAttribute("aria-expanded","false"); return; }
+});
+$("picker").addEventListener("toggle", e=>{
+  const d = e.target; if(!d.dataset || !d.dataset.u) return;
+  openUnits[d.dataset.u] = d.open; store.set("ting.picker.v1", openUnits);
+}, true);
+document.addEventListener("click", e=>{
+  if($("picker").hidden) return;
+  if(e.target.closest && e.target.closest("#picker,#lessonbtn")) return;
+  $("picker").hidden = true; $("lessonbtn").setAttribute("aria-expanded","false");
 });
 
 document.addEventListener("keydown", e=>{
   const tag = e.target.tagName;
   if(tag==="SELECT" || tag==="INPUT" || tag==="TEXTAREA") return;
   if(e.key==="/" ){ e.preventDefault(); $("search").focus(); return; }
+  if(e.key==="Escape" && !$("picker").hidden){ $("picker").hidden = true; return; }
   if(e.key===" "){e.preventDefault();toggle();}
   else if(e.key==="ArrowRight") $("next").click();
   else if(e.key==="ArrowLeft") $("prev").click();
@@ -824,10 +973,11 @@ function buildList(){
   if(searching()){ buildSearch(); return; }
   wlist.innerHTML="";
   order.forEach((wi,p)=>{
-    const c = card(wi);
+    const c = pairMode ? (it=>({zh:WORDS[it.target][0]+" · "+WORDS[it.other][0], py:"", en:""}))(PAIR_ITEMS[wi]) : card(wi);
     const li=document.createElement("li");
     li.tabIndex=0;
-    li.dataset.s = statusOf(wi).cls;
+    li.dataset.s = statusOf(pairMode ? PAIR_ITEMS[wi].target : wi).cls;
+    if(pairMode){ li.innerHTML='<span class="n">'+(p+1)+'</span><span class="lz">'+esc(c.zh)+'</span>'; const jump=()=>{ const was=playing; stop(); pos=p; revealedFor=-1; pairAnswer=null; render(); if(was) loop(); }; li.onclick=jump; wlist.appendChild(li); return; }
     li.innerHTML=`<span class="n">${p+1}</span><span class="lz">${c.zh}</span><span class="lt" data-t="${tierOf(wi)}">${stars(tierOf(wi))}</span><span class="lp">${isRad() ? esc(c.en.split(" / ")[0]) : toneHTML(c.py)}</span>`;
     const jump=()=>{ const was=playing; stop(); pos=p; revealedFor=-1; render(); if(was) loop(); };
     li.onclick=jump;
