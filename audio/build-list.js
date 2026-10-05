@@ -14,13 +14,13 @@ function run(argv){
     write = (p, s) => fs.writeFileSync(root+"/"+p, s);
   }
   const g = {};
-  const src = ["words.js","examples-a.js","examples-b.js","lessons.js","meta.js","radicals.js","words-2.js"]
+  const src = ["words.js","examples-a.js","examples-b.js","lessons.js","meta.js","radicals.js","words-2.js","pairs.js"]
     .map(f=>read(f).replace(/^const /gm, "var ")).join("\n;\n");
-  (new Function("g", src + "\n;g.WORDS=WORDS; g.EXAMPLES=EXAMPLES_A.concat(EXAMPLES_B); g.RADICALS=RADICALS;"))(g);
+  (new Function("g", src + "\n;g.WORDS=WORDS; g.EXAMPLES=EXAMPLES_A.concat(EXAMPLES_B); g.RADICALS=RADICALS; g.PAIRS=PAIRS;"))(g);
 
   // --- same text rules as app.js ---
   const zhChunks = t => t.split(/……|…|\/|\.\.\./).map(s=>s.trim()).filter(Boolean);
-  const enText = s => s.replace(/\.\.\.|…/g," ").replace(/\//g," or ");
+  const enText = s => s.split(" / ")[0].replace(/\.\.\.|…/g," ").replace(/\//g," or ").replace(/\s+/g," ").trim();
   const exZh = s => s.replace(/[…．]+/g," ");
 
   const keys = [], seen = {};
@@ -31,6 +31,8 @@ function run(argv){
     const ex = g.EXAMPLES[i];
     if(ex){ add("zh", exZh(ex[0])); add("en", enText(ex[2])); }
   });
+  (g.PAIRS||[]).forEach(p=>{ [p[3],p[4]].forEach(sn=>{ add("en", enText(sn[2])); }); });
+  (g.PAIRS||[]).forEach(p=>{ [p[0],p[1]].forEach((w,k)=>{ const full = p[3+k][0].replace("＿＿", w); add("zh", exZh(full)); }); });
   g.RADICALS.forEach(r=>{
     zhChunks(r[0]).forEach(c=>add("zh", c));
     add("en", enText(r[2]));
