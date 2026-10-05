@@ -159,8 +159,8 @@
 
   /* tone colours: 1 red · 2 orange · 3 green · 4 blue · neutral grey */
   .t1{color:#ff7b6b} .t2{color:#f3a64a} .t3{color:#7fd08e} .t4{color:#78a9ff} .t5{color:#a9b1ad}
-  .rlink{cursor:pointer;border-bottom:2px dotted rgba(127,184,163,.45);transition:border-color .15s,color .15s}
-  .rlink:hover{color:var(--jade);border-bottom-color:var(--jade)}
+  .rlink{cursor:pointer;text-decoration:underline dotted rgba(127,184,163,.5);text-decoration-thickness:3px;text-underline-offset:.08em;transition:color .15s}
+  .rlink:hover{color:var(--jade);text-decoration-color:var(--jade)}
   .radwords{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
   .rw-head{font-size:.78rem;color:var(--paper-dim);margin-bottom:10px} .rw-head b{color:var(--paper)}
   .rw-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
@@ -178,6 +178,39 @@
   .searchrow input:focus{outline:2px solid var(--amber);outline-offset:1px}
   .searchnote{font-size:.72rem;color:var(--paper-dim);white-space:nowrap}
   .audionote{font-size:.75rem;color:var(--jade);margin:8px 2px 0}
+
+  /* lesson picker */
+  .lessonbtn{width:100%;text-align:left;background:var(--ink-2);color:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 34px 9px 12px;font-size:.88rem;cursor:pointer;position:relative}
+  .lessonbtn::after{content:"";position:absolute;right:13px;top:50%;width:7px;height:7px;border-right:1.5px solid var(--paper-dim);border-bottom:1.5px solid var(--paper-dim);transform:translateY(-70%) rotate(45deg)}
+  .lessonbtn[aria-expanded=true]::after{transform:translateY(-20%) rotate(225deg)}
+  .picker{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--ink-2);padding:8px;max-height:60vh;overflow:auto;box-shadow:0 20px 40px -20px rgba(0,0,0,.8)}
+  .pk-sec{margin-bottom:6px}
+  .pk-head{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--paper-dim);padding:6px 8px 4px}
+  .pk-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .pk-item{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:1px solid transparent;color:var(--paper);border-radius:8px;padding:8px 10px;font-size:.85rem;cursor:pointer}
+  .pk-item:hover{background:var(--surface-2)}
+  .pk-item.on{border-color:var(--seal);background:rgba(214,69,44,.14)}
+  .pk-n{font-size:.72rem;color:var(--paper-dim);white-space:nowrap;margin-left:auto}
+  .pk-unit{border-top:1px solid var(--line)}
+  .pk-unit summary{display:flex;align-items:center;gap:8px;list-style:none;cursor:pointer;padding:9px 8px;font-size:.84rem;color:var(--paper);user-select:none}
+  .pk-unit summary::-webkit-details-marker{display:none}
+  .pk-unit summary::before{content:"";width:6px;height:6px;border-right:1.5px solid var(--paper-dim);border-bottom:1.5px solid var(--paper-dim);transform:rotate(-45deg);margin-right:4px;transition:transform .15s}
+  .pk-unit[open] summary::before{transform:rotate(45deg)}
+  .pk-unit .pk-item{padding-left:26px}
+  .pk-filter summary{color:var(--paper-dim)}
+
+  /* confusable pairs */
+  .pairbox{margin:18px auto 0;max-width:46ch}
+  .pair-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pbtn{border:1px solid var(--line);background:var(--surface-2);color:var(--paper);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:border-color .15s,background .15s}
+  .pbtn:hover:not(:disabled){border-color:var(--amber)}
+  .pbtn:disabled{cursor:default;opacity:.75}
+  .pbtn.right{border-color:var(--jade);background:rgba(127,184,163,.14);opacity:1}
+  .pbtn.wrong{border-color:var(--seal);background:rgba(214,69,44,.12)}
+  .pbtn .pz{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1.9rem;line-height:1.1}
+  .pbtn .pp{font-size:.85rem}
+  .pbtn .pe{font-size:.75rem;color:var(--paper-dim)}
+  .pair-note{margin-top:14px;font-size:.82rem;color:var(--paper-dim);line-height:1.55;text-align:left;border-left:2px solid var(--amber);padding:4px 0 4px 10px}
 
   /* list */
   .listhead{display:flex;align-items:center;justify-content:space-between;margin:30px 2px 12px}
@@ -240,6 +273,7 @@
       <div class="ex-grid" id="exgrid"></div>
     </div>
     <div class="radwords" id="radwords" hidden></div>
+    <div class="pairbox" id="pairbox" hidden></div>
     <button class="chip reveal" id="reveal" hidden>Reveal answer · R</button>
   </section>
 
@@ -267,11 +301,13 @@
     <div class="row" id="lessonrow">
       <label for="lesson">Lesson</label>
       <div class="ctl" style="flex-direction:column;align-items:stretch;gap:0">
-        <select id="lesson"></select>
+        <button class="lessonbtn" id="lessonbtn" aria-haspopup="true" aria-expanded="false">All lessons</button>
+        <select id="lesson" hidden aria-hidden="true"></select>
+        <div class="picker" id="picker" hidden></div>
         <div class="lessonnote" id="lessonnote" hidden></div>
       </div>
     </div>
-    <div class="row">
+    <div class="row" id="moderow">
       <label>Mode</label>
       <div class="ctl">
         <div class="chips" id="quizmode">
@@ -372,5 +408,6 @@
 <script src="meta.js"></script>
 <script src="radicals.js"></script>
 <script src="words-2.js"></script>
+<script src="pairs.js"></script>
 <script src="audio/manifest.js"></script>
 <script src="app.js"></script>
