@@ -154,7 +154,7 @@ function statusOf(i){
 
 /* ---------- settings (persisted) ---------- */
 const DEFAULTS = { rate:0.8, repeat:2, gap:1.2, think:1.5, english:true, example:false, shuffle:false,
-                   byFreq:false, slowFirst:false, quiz:"off", lesson:"__all__", voice:"", tab:"vocab", tones:true, goal:20, clips:true };
+                   byFreq:false, slowFirst:false, quiz:"off", lesson:"__all__", voice:"", enVoice:"", tab:"vocab", tones:true, goal:20, clips:true };
 const settings = Object.assign({}, DEFAULTS, store.get(SET_KEY, {}) || {});
 const saveSettings = () => store.set(SET_KEY, settings);
 
@@ -343,11 +343,45 @@ function loadVoices(){
     zhVoice = zh.find(v=>v.voiceURI===settings.voice) || zh[0];
     sel.value = zhVoice.voiceURI;
   }
-  // prefer an offline English voice too
+  // English: rank by how natural the voice sounds (neural/premium first), not by offline-ness
   let en = allVoices.filter(v=>/^en/i.test(v.lang));
-  en.sort((a,b)=> (b.localService===true) - (a.localService===true));
-  enVoice = en[0] || null;
+  en.sort((x,y)=> enQuality(y)-enQuality(x) || x.name.localeCompare(y.name));
+  enVoices = en;
+  const es = $("envoice"); es.innerHTML = "";
+  if(!en.length){ es.innerHTML = '<option>No English voice found</option>'; enVoice = null; }
+  else {
+    en.forEach(v=>{
+      const o=document.createElement("option"); o.value=v.voiceURI;
+      o.textContent = v.name+" — "+v.lang+(enQuality(v)>=4 ? "  ✦ natural" : v.localService ? "" : "  (online)");
+      es.appendChild(o);
+    });
+    enVoice = en.find(v=>v.voiceURI===settings.enVoice) || en[0];
+    es.value = enVoice.voiceURI;
+  }
 }
+// Higher = more natural. Neural/online voices (Edge "Natural", Google, Siri, Apple Premium/Enhanced) beat the
+// old compact system voices by a wide margin.
+function enQuality(v){
+  const n=(v.name||"").toLowerCase();
+  let q=0;
+  if(/natural|neural|premium|enhanced|siri|wavenet|journey|studio/.test(n)) q+=4;
+  if(/google/.test(n)) q+=3;
+  if(/samantha|ava|zoe|allison|daniel|karen|moira|tessa|serena|evan|nathan|tom|alex/.test(n)) q+=2;   // Apple's better stock voices
+  if(/compact|espeak|eloquence|fred|albert|bad news|bells|boing|bubbles|cellos|deranged|good news|hysterical|junior|kathy|organ|ralph|trinoids|whisper|zarvox|novelty/.test(n)) q-=5;
+  if(/^en[-_]us/i.test(v.lang)) q+=1;
+  return q;
+}
+let enVoices=[];
+function sampleEn(){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance("To recommend"); u.lang="en-US"; u.rate=Math.max(0.9,settings.rate); if(enVoice) u.voice=enVoice;
+  speechSynthesis.speak(u);
+}
+$("envoice").addEventListener("change", e=>{
+  enVoice = allVoices.find(v=>v.voiceURI===e.target.value) || enVoice;
+  settings.enVoice = enVoice ? enVoice.voiceURI : ""; saveSettings();
+  sampleEn();
+});
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 // Some browsers populate voices late — re-check a couple of times.
@@ -1037,7 +1071,7 @@ function syncControls(){
 
 // refresh due counts once a minute (skipped while the menu is focused so it doesn't close on you)
 setInterval(()=>{
-  if(document.activeElement === $("lesson")) return;
+  if(document.activeElement === $("lesson") || document.activeElement === $("envoice")) return;
   buildLessonMenu(); updateStats();
   if(!playing && order.length) setStatus(idx());
 }, 60000);
