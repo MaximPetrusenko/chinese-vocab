@@ -429,13 +429,59 @@ function linkChars(zh){
   }).join("");
 }
 
+/* ---------- 多音字: characters with several readings ---------- */
+// Pinyin syllables of a word, in order (erhua "r" and spaces dropped), e.g. "děng yíhuìr" → ["děng","yí","huì"].
+function pySyllables(py){
+  const out = [], chars = [...py]; let i = 0;
+  while(i < chars.length){
+    if(/[a-zA-ZüÜ]/.test(pyChar(chars[i]).base)){
+      let j = i; while(j < chars.length && /[a-zA-ZüÜ]/.test(pyChar(chars[j]).base)) j++;
+      const run = chars.slice(i,j).join(""), seg = toneSegments(run);
+      if(seg) seg.forEach(([s,e])=>{ const syl = chars.slice(i+s,i+e).join(""); if(syl !== "r") out.push(syl); });
+      else out.push(run);
+      i = j;
+    } else i++;
+  }
+  return out;
+}
+const pyBase = s => s.normalize("NFD").replace(COMBINING,"").toLowerCase();
+const pyEq = (x,y) => x.normalize("NFD").toLowerCase() === y.normalize("NFD").toLowerCase();
+function polyNotes(w){
+  const han = [...w[0]].filter(ch=>/\p{Script=Han}/u.test(ch));
+  const syls = pySyllables(w[1]), aligned = syls.length === han.length;
+  const seen = new Set(), notes = [];
+  han.forEach((ch,k)=>{
+    const P = POLY[ch]; if(!P || seen.has(ch)) return; seen.add(ch);
+    const syl = aligned ? syls[k] : (syls.find(s=>P.some(r=>pyEq(r[0],s))) || "");
+    let here = P.filter(r=>pyEq(r[0],syl));                       // exact match incl. tone
+    if(!here.length && syl) here = P.filter(r=>pyBase(r[0])===pyBase(syl));  // neutral tone in this word
+    if(here.length > 1){ const ex = here.find(r=>r[2] && w[0].includes(r[2])); if(ex) here = [ex]; }   // e.g. 头发 → fà
+    const hereIdx = here.length === 1 ? P.indexOf(here[0]) : -1;
+    const others = P.filter((r,i)=>i!==hereIdx);
+    let html = '<span class="poly-tag">多音字</span> <b class="poly-ch">'+esc(ch)+'</b>';
+    if(hereIdx >= 0) html += ' here <span class="mp">'+toneHTML(P[hereIdx][0])+'</span> <span class="poly-m">'+esc(P[hereIdx][1])+'</span>';
+    else if(here.length > 1) html += ' here <span class="mp">'+toneHTML(syl)+'</span> <span class="poly-m">(neutral tone)</span>';
+    html += others.map(r=>{
+      const wi = WORD_IDX[r[2]];
+      const exw = r[2] ? (wi !== undefined ? '<button class="poly-ex" data-wi="'+wi+'">'+esc(r[2])+'</button>' : '<span class="poly-ex">'+esc(r[2])+'</span>') : "";
+      return '<span class="poly-alt">· also <span class="mp">'+toneHTML(r[0])+'</span> <span class="poly-m">'+esc(r[1])+'</span> '+exw+'</span>';
+    }).join("");
+    notes.push('<div class="poly">'+html+'</div>');
+  });
+  return notes.join("");
+}
 function renderMore(w){
   const a = ALT[w[0]];
-  if(!a){ moreBox.hidden = true; moreBox.innerHTML = ""; return; }
-  moreBox.innerHTML = '<div class="more-note">'+esc(a.note)+'</div>' +
+  let html = "";
+  if(a) html += '<div class="more-note">'+esc(a.note)+'</div>' +
     a.ex.map(e=>'<div class="more-ex"><span class="mz">'+esc(e[0])+'</span> <span class="mp">'+toneHTML(e[1])+'</span> <span class="me">'+esc(e[2])+'</span></div>').join("");
-  moreBox.hidden = false;
+  html += polyNotes(w);
+  moreBox.innerHTML = html; moreBox.hidden = !html;
 }
+moreBox.addEventListener("click", e=>{
+  const b = e.target.closest && e.target.closest("[data-wi]"); if(!b) return;
+  e.stopPropagation(); jumpToWord(+b.dataset.wi);
+});
 
 function render(){
   const tierEl = $("tier");
