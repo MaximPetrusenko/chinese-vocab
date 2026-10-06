@@ -221,6 +221,35 @@
   .pbtn .pe{font-size:.75rem;color:var(--paper-dim)}
   .pair-note{margin-top:14px;font-size:.82rem;color:var(--paper-dim);line-height:1.55;text-align:left;border-left:2px solid var(--amber);padding:4px 0 4px 10px}
 
+  /* tutor */
+  .tutor-setup{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:18px 20px;margin-bottom:14px}
+  .tutor-setup h3{margin:0 0 8px;font-size:1rem;letter-spacing:.04em}
+  .tutor-setup p{font-size:.85rem;color:var(--paper-dim);line-height:1.55;margin:0 0 10px}
+  .tutor-setup a{color:var(--jade)}
+  .tutor-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .tutor-row input{flex:2;min-width:200px;background:var(--ink-2);color:var(--paper);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:.9rem}
+  .tutor-row select,.tutor-bar select{background:var(--ink-2);color:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:.82rem}
+  .tutor-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .tutor-cost{font-size:.72rem;color:var(--paper-dim);white-space:nowrap}
+  .tutor-log{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:14px;min-height:40vh;max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+  .tmsg{max-width:85%;border-radius:14px;padding:10px 14px;line-height:1.4}
+  .tmsg.user{align-self:flex-end;background:rgba(214,69,44,.18);border:1px solid rgba(214,69,44,.35)}
+  .tmsg.tutor{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line)}
+  .tmsg .tzh{font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;font-size:clamp(1.25rem,5vw,1.6rem);line-height:1.4}
+  .tmsg .tpy{font-size:.9rem;color:var(--amber);margin-top:3px}
+  .tmsg .ten{font-size:.85rem;color:var(--paper-dim);margin-top:4px}
+  .tutor-log.hide-en .ten{display:none}
+  .tmsg .tfix{font-size:.82rem;color:var(--seal-soft);border-left:2px solid var(--seal);padding:2px 0 2px 8px;margin-bottom:8px;line-height:1.5}
+  .tmsg .tact{display:flex;gap:6px;margin-top:8px} .tmsg .tact .chip{padding:3px 9px;font-size:.72rem}
+  .tw{cursor:pointer;border-bottom:2px dotted rgba(127,184,163,.6)} .tw:hover{color:var(--jade)}
+  .tutor-status{font-size:.78rem;color:var(--paper-dim);min-height:1.2em;margin:8px 4px 4px}
+  .tutor-in{display:flex;gap:10px;align-items:center}
+  .tutor-in input{flex:1;background:var(--ink-2);color:var(--paper);border:1px solid var(--line);border-radius:999px;padding:12px 16px;font-size:1rem}
+  .tutor-in input:focus{outline:2px solid var(--amber);outline-offset:1px}
+  .tutor-in .mic{width:48px;height:48px} .tutor-in .mic.live{background:var(--seal);border-color:var(--seal);animation:pulse 1.6s ease-out infinite}
+  .tutor-in .send{padding:11px 18px;background:var(--seal);border-color:var(--seal);color:#fff}
+  .tutor-in .send:disabled{opacity:.5}
+
   /* list */
   .listhead{display:flex;align-items:center;justify-content:space-between;margin:30px 2px 12px}
   .listhead h2{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--paper-dim);font-weight:600;margin:0}
@@ -253,11 +282,57 @@
   <div class="applink">
     <a href="#vocab" class="chip" id="tab-vocab" aria-pressed="true">听 Vocabulary</a>
     <a href="#radicals" class="chip" id="tab-rad" aria-pressed="false">部首 Radicals</a>
+    <a href="#tutor" class="chip" id="tab-tutor" aria-pressed="false" title="Talk with an AI tutor that only uses your words">💬 Tutor</a>
     <span class="navsep"></span>
     <a href="#frequency" class="chip toggle" id="freqtab" aria-pressed="false" title="Sort so the most common come first — works on both tabs">★ Most common first</a>
   </div>
   <p class="radlead" id="radlead" hidden>Radicals are the building blocks of characters. Learn one, and every character built from it gets a handle. Each card shows the radical, its variant forms, and three characters it lives inside.</p>
 
+  <section class="tutor" id="tutor" hidden>
+    <div class="tutor-setup" id="tutor-setup">
+      <h3>AI tutor · 聊天</h3>
+      <p>A conversation partner that only uses the words in this app, corrects you, and feeds what you get right or wrong back into your review queue. Replies are read aloud with your Chinese voice.</p>
+      <p>It runs on Claude through your own Anthropic API key. Create one at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a> (set a spend limit there — a 20-minute chat costs about a cent with Haiku). The key is saved only in this browser and sent only to api.anthropic.com.</p>
+      <div class="tutor-row">
+        <input id="tutor-key" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+        <select id="tutor-model">
+          <option value="claude-haiku-4-5-20251001">Haiku — fast, ~1¢ per chat</option>
+          <option value="claude-sonnet-5-5">Sonnet — smarter, ~5× the cost</option>
+        </select>
+        <button class="chip" id="tutor-save">Save</button>
+      </div>
+    </div>
+    <div id="tutor-chat" hidden>
+      <div class="tutor-bar">
+        <select id="tutor-scope" title="Which words the tutor tries to practise">
+          <option value="lesson">Practise: current lesson</option>
+          <option value="due">Practise: due &amp; hard words</option>
+          <option value="all">Practise: whole deck</option>
+        </select>
+        <div class="seg" id="tutor-style">
+          <button class="chip" data-s="teacher" title="Explains in English when you're stuck">Teacher</button>
+          <button class="chip" data-s="immersive" title="Stays in Chinese unless you ask">Immersive</button>
+        </div>
+        <button class="chip" id="tutor-en" aria-pressed="true" title="Show the English translation under each reply">English</button>
+        <span class="navsep"></span>
+        <span class="tutor-cost" id="tutor-cost"></span>
+        <button class="chip" id="tutor-new" title="Start a fresh conversation">New chat</button>
+        <button class="chip" id="tutor-gear" title="API key and model">⚙</button>
+      </div>
+      <div class="tutor-log" id="tutor-log"></div>
+      <div class="tutor-status" id="tutor-status"></div>
+      <div class="tutor-in">
+        <button class="tbtn mic" id="tutor-mic" aria-label="Speak" title="Speak Chinese (Chrome / Safari)">
+          <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+        </button>
+        <input id="tutor-in" placeholder="用中文回答… or type in English / pinyin" autocomplete="off">
+        <button class="chip send" id="tutor-send">Send</button>
+      </div>
+      <p class="hint">Tap any highlighted word to open its card. What you use correctly counts as ✓, mistakes as ✗ in your review queue.</p>
+    </div>
+  </section>
+
+  <div id="main">
   <section class="stage" id="stage" role="button" tabindex="0" aria-label="Play or pause">
     <div class="pbar" id="pbar"></div>
     <div class="seal" id="seal">听</div>
@@ -414,6 +489,7 @@
   <div class="listhead"><h2 id="listtitle">Words · tap to jump</h2><span class="stats" id="stats"></span></div>
   <div class="searchrow"><input id="search" type="search" placeholder="Search all words — 想, xiang or miss" autocomplete="off" spellcheck="false"><span class="searchnote" id="searchnote"></span></div>
   <ul class="wlist" id="wlist"></ul>
+  </div>
 </div>
 
 <script src="words.js"></script>
@@ -427,3 +503,4 @@
 <script src="poly.js"></script>
 <script src="audio/manifest.js"></script>
 <script src="app.js"></script>
+<script src="tutor.js"></script>
