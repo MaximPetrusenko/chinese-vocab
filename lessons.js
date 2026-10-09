@@ -39,5 +39,6 @@ const UNITS = [
   ["NT3 · 习惯 & 家乡", ["Habits & routines 习惯","Hometown · city vs. countryside 家乡","Feelings & habits · 感觉 情绪"]],
   ["Unit 2-01 · 入乡随俗", ["Grammar & daily life · 入乡随俗","入乡随俗 · When in Rome"]],
   ["Unit 2-04 · 我和中国有个约会", ["我和中国有个约会 · A date with China","我和中国有个约会 II · 其实 & reading"]],
-  ["Unit 2-06 · 我这里一切都好", ["我这里一切都好 · 当 & 越……越……","我这里一切都好 II · Mom's email 邮件","我这里一切都好 III · Reply to Mom 回信"]]
+  ["Unit 2-06 · 我这里一切都好", ["我这里一切都好 · 当 & 越……越……","我这里一切都好 II · Mom's email 邮件","我这里一切都好 III · Reply to Mom 回信"]],
+  ["Unit 2-08 · 快乐其实很简单", ["快乐其实很简单 · Happiness is simple"]]
 ];
