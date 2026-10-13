@@ -50,6 +50,26 @@ const NEW_LESSONS = [
     ["贫穷","pínqióng","Poor / poverty","他们帮助贫穷的人。","Tāmen bāngzhù pínqióng de rén.","They help poor people.","adj",3],
     ["猫","māo","Cat","我家有一只猫。","Wǒ jiā yǒu yì zhī māo.","There's a cat at my home.","n",1],
     ["喂","wèi","To feed","她每天喂小区的猫。","Tā měitiān wèi xiǎoqū de māo.","She feeds the neighbourhood cats every day.","v",2]
+  ]],
+  ["快乐其实很简单 II · 幸福在今天", [
+    ["平安","píng'ān","Safe / peace","只要家人平安，我就放心了。","Zhǐyào jiārén píng'ān, wǒ jiù fàngxīn le.","As long as my family is safe, I'm at ease.","adj",2],
+    ["总是","zǒngshì","Always","他总是说明天开始。","Tā zǒngshì shuō míngtiān kāishǐ.","He always says he'll start tomorrow.","adv",1],
+    ["真","zhēn","Really / truly","现在的工作真让人受不了。","Xiànzài de gōngzuò zhēn ràng rén shòubuliǎo.","This job is really unbearable.","adv",1],
+    ["父母","fùmǔ","Parents","我想让父母过上幸福的生活。","Wǒ xiǎng ràng fùmǔ guòshang xìngfú de shēnghuó.","I want my parents to live a happy life.","n",1],
+    ["汽车","qìchē","Car","他买了房子和汽车。","Tā mǎi le fángzi hé qìchē.","He bought a house and a car.","n",1],
+    ["这么","zhème","So / this (much)","我不想让自己这么辛苦。","Wǒ bù xiǎng ràng zìjǐ zhème xīnkǔ.","I don't want to make myself work this hard.","adv",1],
+    ["明天","míngtiān","Tomorrow","他们觉得幸福在明天。","Tāmen juéde xìngfú zài míngtiān.","They think happiness is in tomorrow.","n",1],
+    ["将来","jiānglái","Future / in the future","现在找不到快乐，将来也很难找到。","Xiànzài zhǎobudào kuàilè, jiānglái yě hěn nán zhǎodào.","If you can't find happiness now, it's hard to find in the future too.","n",2],
+    ["迎接","yíngjiē","To welcome / to greet","用善良的心去迎接每一天。","Yòng shànliáng de xīn qù yíngjiē měi yì tiān.","Welcome each day with a kind heart.","v",3],
+    ["朵","duǒ","Measure word for flowers / clouds","去爱每一朵花。","Qù ài měi yì duǒ huā.","Love every flower.","mw",2],
+    ["获得","huòdé","To obtain / to gain","获得报酬让我很快乐。","Huòdé bàochou ràng wǒ hěn kuàilè.","Getting paid makes me happy.","v",3],
+    ["报酬","bàochou","Pay / reward","这个工作的报酬不高。","Zhège gōngzuò de bàochou bù gāo.","The pay for this job isn't high.","n",3],
+    ["不一定","bùyídìng","Not necessarily","有钱不一定快乐。","Yǒuqián bùyídìng kuàilè.","Being rich doesn't necessarily mean being happy.","adv",2],
+    ["等……以后","děng……yǐhòu","Once… / after… (waiting until)","等我有了钱以后，我要买房子。","Děng wǒ yǒu le qián yǐhòu, wǒ yào mǎi fángzi.","Once I have money, I'll buy a house.","pat",2],
+    ["过上","guòshang","To come to live (a kind of life)","他终于过上了稳定的生活。","Tā zhōngyú guòshang le wěndìng de shēnghuó.","He finally came to live a stable life.","v",3],
+    ["心","xīn","Heart / mind","她有一颗善良的心。","Tā yǒu yì kē shànliáng de xīn.","She has a kind heart.","n",1],
+    ["爱","ài","To love","去爱身边的每一个人。","Qù ài shēnbiān de měi yí ge rén.","Love everyone around you.","v",1],
+    ["让……","ràng……","To make / let someone do (让 + person + verb)","好吃的食物让我很快乐。","Hǎochī de shíwù ràng wǒ hěn kuàilè.","Delicious food makes me happy.","pat",1]
   ]]
 ];
 NEW_LESSONS.forEach(([name, rows])=>{
