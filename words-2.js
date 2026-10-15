@@ -70,6 +70,27 @@ const NEW_LESSONS = [
     ["心","xīn","Heart / mind","她有一颗善良的心。","Tā yǒu yì kē shànliáng de xīn.","She has a kind heart.","n",1],
     ["爱","ài","To love","去爱身边的每一个人。","Qù ài shēnbiān de měi yí ge rén.","Love everyone around you.","v",1],
     ["让……","ràng……","To make / let someone do (让 + person + verb)","好吃的食物让我很快乐。","Hǎochī de shíwù ràng wǒ hěn kuàilè.","Delicious food makes me happy.","pat",1]
+  ]],
+  ["快乐其实很简单 III · 一M一M地", [
+    ["一……一……地","yī……yī……de","One by one (一 + measure word, doubled, + 地 + verb)","饭要一口一口地吃，事情要一件一件地做。","Fàn yào yì kǒu yì kǒu de chī, shìqing yào yí jiàn yí jiàn de zuò.","Eat rice bite by bite; do things one by one.","pat",1],
+    ["步","bù","Step","大家一步一步地往山上爬。","Dàjiā yí bù yí bù de wǎng shān shàng pá.","Everyone climbed the mountain step by step.","n",1],
+    ["往","wǎng","Towards / to","请往前走。","Qǐng wǎng qián zǒu.","Please walk forward.","conj",1],
+    ["爬","pá","To climb / to crawl","我们周末去爬山。","Wǒmen zhōumò qù pá shān.","We're going mountain climbing at the weekend.","v",2],
+    ["查","chá","To check / to look up","这些书一本一本都查过了。","Zhèxiē shū yì běn yì běn dōu chá guo le.","These books have all been checked one by one.","v",2],
+    ["录入","lùrù","To enter / to input (data)","她一个字一个字地录入文件。","Tā yí gè zì yí gè zì de lùrù wénjiàn.","She enters the document character by character.","v",3],
+    ["文件","wénjiàn","Document / file","请把文件发给我。","Qǐng bǎ wénjiàn fā gěi wǒ.","Please send me the document.","n",2],
+    ["打印","dǎyìn","To print","我要打印一份文件。","Wǒ yào dǎyìn yí fèn wénjiàn.","I need to print a document.","v",2],
+    ["汉字","Hànzì","Chinese character","你用什么方法记汉字？","Nǐ yòng shénme fāngfǎ jì Hànzì?","What method do you use to memorize characters?","n",1],
+    ["卡片","kǎpiàn","Card (flash card)","我把汉字一个一个地写在卡片上。","Wǒ bǎ Hànzì yí gè yí gè de xiě zài kǎpiàn shàng.","I write the characters on cards one by one.","n",2],
+    ["钱包","qiánbāo","Wallet","我把钱包带到这儿了。","Wǒ bǎ qiánbāo dài dào zhèr le.","I brought my wallet here.","n",1],
+    ["课文","kèwén","Lesson text","学过的课文我一篇一篇都复习了。","Xué guo de kèwén wǒ yì piān yì piān dōu fùxí le.","I've reviewed all the texts we learned, one by one.","n",1],
+    ["停电","tíngdiàn","Power cut","明天停电的事，你每家都告诉过了吗？","Míngtiān tíngdiàn de shì, nǐ měi jiā dōu gàosu guo le ma?","Have you told every household about tomorrow's power cut?","v",2],
+    ["国家","guójiā","Country","我在一个一个国家地旅行。","Wǒ zài yí gè yí gè guójiā de lǚxíng.","I'm travelling country by country.","n",1],
+    ["每","měi","Every / each","每个人都要来。","Měi ge rén dōu yào lái.","Everyone has to come.","adv",1],
+    ["生词","shēngcí","New word (vocabulary)","她把生词一个一个地记住了。","Tā bǎ shēngcí yí gè yí gè de jìzhù le.","She memorized the new words one by one.","n",1],
+    ["语法","yǔfǎ","Grammar","老师把语法点一个一个地讲清楚了。","Lǎoshī bǎ yǔfǎdiǎn yí gè yí gè de jiǎng qīngchu le.","The teacher explained the grammar points one by one, clearly.","n",1],
+    ["收拾","shōushi","To tidy up / to put away","我已经把衣服一件一件地收拾好了。","Wǒ yǐjīng bǎ yīfu yí jiàn yí jiàn de shōushi hǎo le.","I've already put the clothes away one by one.","v",2],
+    ["杯子","bēizi","Cup / glass","请把杯子放在桌子上。","Qǐng bǎ bēizi fàng zài zhuōzi shàng.","Please put the cup on the table.","n",1]
   ]]
 ];
 NEW_LESSONS.forEach(([name, rows])=>{
