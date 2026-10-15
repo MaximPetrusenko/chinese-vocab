@@ -250,6 +250,41 @@
   .tutor-in .send{padding:11px 18px;background:var(--seal);border-color:var(--seal);color:#fff}
   .tutor-in .send:disabled{opacity:.5}
 
+  /* measure words */
+  .mw-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .mw-intro{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:12px 16px;margin-bottom:14px;font-size:.85rem;line-height:1.6;color:var(--paper-dim)}
+  .mw-intro b{color:var(--paper)} .mw-pat2{margin-top:4px}
+  .mw-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:640px){.mw-grid{grid-template-columns:1fr}}
+  .mwcard{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:12px 14px;position:relative}
+  .mwcard::before{content:"";position:absolute;top:14px;right:14px;width:7px;height:7px;border-radius:50%;border:1px solid var(--line)}
+  .mwcard[data-s=ok]::before{background:var(--jade);border-color:var(--jade)} .mwcard[data-s=due]::before{background:var(--amber);border-color:var(--amber)} .mwcard[data-s=hard]::before{background:var(--seal);border-color:var(--seal)}
+  .mw-head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+  .mw-ch{font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;font-size:2.2rem;line-height:1.1}
+  .mw-py{font-size:.95rem;color:var(--amber)}
+  .mw-say{padding:2px 8px;font-size:.72rem;margin-left:auto;margin-right:18px}
+  .mw-use{font-size:.8rem;color:var(--paper-dim);line-height:1.45;margin-bottom:8px}
+  .mw-nouns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .mw-noun{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1rem;border:1px solid var(--line);background:var(--surface-2);color:var(--paper-dim);border-radius:8px;padding:3px 9px;cursor:pointer}
+  .mw-noun b{color:var(--paper);font-weight:600} .mw-noun:hover{border-color:var(--amber)}
+  .mw-ex{border-top:1px dashed var(--line);padding-top:8px;font-size:.8rem}
+  .mw-ezh{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1.05rem;color:var(--paper)}
+  .mw-epy{color:var(--amber);margin-top:2px} .mw-een{color:var(--paper-dim);margin-top:2px}
+  .mw-ex .mw-say{margin:6px 0 0;display:inline-block}
+  .mw-qcard{border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:34px 24px 22px;text-align:center}
+  .mw-qzh{font-family:"Songti SC","STSong","Noto Serif CJK SC","SimSun",serif;font-size:clamp(2.4rem,10vw,4rem);line-height:1.2}
+  .mw-gap{color:var(--amber);border-bottom:3px solid var(--amber)}
+  .mw-qen{font-size:.95rem;color:var(--paper-dim);margin:6px 0 22px}
+  .mw-choices{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:440px;margin:0 auto}
+  .mw-choice{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1.9rem;border:1px solid var(--line);background:var(--surface-2);color:var(--paper);border-radius:14px;padding:12px 0;cursor:pointer;transition:border-color .15s,background .15s}
+  .mw-choice:hover:not(:disabled){border-color:var(--amber)} .mw-choice:disabled{cursor:default;opacity:.6}
+  .mw-choice.right{border-color:var(--jade);background:rgba(127,184,163,.16);opacity:1} .mw-choice.wrong{border-color:var(--seal);background:rgba(214,69,44,.14);opacity:1}
+  .mw-feedback{min-height:3.2em;margin-top:18px;font-size:.95rem}
+  .mw-fb{font-family:"Songti SC","Noto Serif CJK SC",serif;font-size:1.3rem} .mw-fb.ok{color:var(--jade)} .mw-fb.no{color:var(--seal-soft)}
+  .mw-fb .mw-py{font-family:system-ui,sans-serif;font-size:.9rem;margin-left:8px}
+  .mw-fbuse{font-size:.8rem;color:var(--paper-dim);margin-top:4px}
+  .mw-qfoot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;min-height:34px}
+
   /* survey */
   .survey{margin:10px 0 0;border:1px solid rgba(216,176,106,.45);border-radius:14px;background:rgba(216,176,106,.08);padding:12px 14px}
   .sv-q{font-size:.85rem;line-height:1.5;margin-bottom:10px} .sv-q b{color:var(--amber)} .sv-q em{font-style:normal;color:var(--paper)}
@@ -290,6 +325,7 @@
   <div class="applink">
     <a href="#vocab" class="chip" id="tab-vocab" aria-pressed="true">听 Vocabulary</a>
     <a href="#radicals" class="chip" id="tab-rad" aria-pressed="false">部首 Radicals</a>
+    <a href="#measure" class="chip" id="tab-mw" aria-pressed="false" title="量词 — which measure word goes with which noun">量词 Measure words</a>
     <a href="#tutor" class="chip" id="tab-tutor" aria-pressed="false" title="Talk with an AI tutor that only uses your words">💬 Tutor</a>
     <span class="navsep"></span>
     <a href="#frequency" class="chip toggle" id="freqtab" aria-pressed="false" title="Sort so the most common come first — works on both tabs">★ Most common first</a>
@@ -338,6 +374,33 @@
         <button class="chip send" id="tutor-send">Send</button>
       </div>
       <p class="hint">Tap any highlighted word to open its card. What you use correctly counts as ✓, mistakes as ✗ in your review queue.</p>
+    </div>
+  </section>
+
+  <section class="mwsec" id="mw" hidden>
+    <div class="mw-bar">
+      <div class="seg" id="mw-mode">
+        <button class="chip" data-m="browse" aria-pressed="true">Browse</button>
+        <button class="chip" data-m="quiz" title="See a noun, pick its measure word">Quiz: which 量词?</button>
+      </div>
+      <span class="navsep"></span>
+      <span class="stats" id="mw-stats"></span>
+    </div>
+    <div id="mw-browse">
+      <div class="mw-intro">
+        <div class="mw-pat"><b>一 M 一 M 地 + verb</b> = one by one. 一 is read <span class="t2">yí</span> before a 4th-tone measure word (一件 yí jiàn, 一个 yí ge) and <span class="t4">yì</span> otherwise (一本 yì běn, 一杯 yì bēi).</div>
+        <div class="mw-pat2">把 + object + 一M一M地 + verb + 了 · 我们<b>把</b>问题<b>一个一个地</b>解决<b>了</b>。 With 都 instead of 地 it stresses "every single one": 这些书一本一本<b>都</b>查过了。 Tap any 一M+noun to hear it.</div>
+      </div>
+      <div class="mw-grid" id="mw-grid"></div>
+    </div>
+    <div id="mw-quiz" hidden>
+      <div class="mw-qcard">
+        <div class="mw-qnoun" id="mw-qnoun"></div>
+        <div class="mw-choices" id="mw-choices"></div>
+        <div class="mw-feedback" id="mw-feedback"></div>
+        <div class="mw-qfoot"><span class="stats" id="mw-score"></span><button class="chip" id="mw-next" hidden>Next · Enter</button></div>
+      </div>
+      <p class="hint">Keys <b>1–4</b> choose · <b>Enter</b> next. Each answer rates that measure word in your review queue (shown as 量词:X in stats).</p>
     </div>
   </section>
 
@@ -522,7 +585,9 @@
 <script src="words-2.js"></script>
 <script src="pairs.js"></script>
 <script src="poly.js"></script>
+<script src="mw-data.js"></script>
 <script src="audio/manifest.js"></script>
 <script src="app.js"></script>
 <script src="tutor.js"></script>
+<script src="mw.js"></script>
 <script src="growth.js"></script>
