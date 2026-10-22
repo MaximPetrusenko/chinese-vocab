@@ -41,5 +41,5 @@ const UNITS = [
   ["Unit 2-04 · 我和中国有个约会", ["我和中国有个约会 · A date with China","我和中国有个约会 II · 其实 & reading"]],
   ["Unit 2-06 · 我这里一切都好", ["我这里一切都好 · 当 & 越……越……","我这里一切都好 II · Mom's email 邮件","我这里一切都好 III · Reply to Mom 回信"]],
   ["Unit 2-08 · 快乐其实很简单", ["快乐其实很简单 · Happiness is simple","快乐其实很简单 II · 幸福在今天","快乐其实很简单 III · 一M一M地"]],
-  ["中级阅读 · Intermediate reading", ["第一次去中国 · Intermediate reading I"]]
+  ["中级阅读 · Intermediate reading", ["第一次去中国 · Intermediate reading I","第一次去中国 II · ……的 & word order"]]
 ];
