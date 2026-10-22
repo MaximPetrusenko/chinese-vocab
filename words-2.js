@@ -91,6 +91,29 @@ const NEW_LESSONS = [
     ["语法","yǔfǎ","Grammar","老师把语法点一个一个地讲清楚了。","Lǎoshī bǎ yǔfǎdiǎn yí gè yí gè de jiǎng qīngchu le.","The teacher explained the grammar points one by one, clearly.","n",1],
     ["收拾","shōushi","To tidy up / to put away","我已经把衣服一件一件地收拾好了。","Wǒ yǐjīng bǎ yīfu yí jiàn yí jiàn de shōushi hǎo le.","I've already put the clothes away one by one.","v",2],
     ["杯子","bēizi","Cup / glass","请把杯子放在桌子上。","Qǐng bǎ bēizi fàng zài zhuōzi shàng.","Please put the cup on the table.","n",1]
+  ]],
+  ["第一次去中国 · Intermediate reading I", [
+    ["不同","bùtóng","Different","不同的城市有不同的特点。","Bùtóng de chéngshì yǒu bùtóng de tèdiǎn.","Different cities have different features.","adj",1],
+    ["特点","tèdiǎn","Feature / characteristic","每个地方都有自己的特点。","Měi ge dìfang dōu yǒu zìjǐ de tèdiǎn.","Every place has its own features.","n",2],
+    ["下面","xiàmiàn","Below / next (in a text)","下面我们介绍四个地方。","Xiàmiàn wǒmen jièshào sì ge dìfang.","Below we introduce four places.","n",1],
+    ["有代表性","yǒu dàibiǎoxìng","Representative / typical","北京是很有代表性的城市。","Běijīng shì hěn yǒu dàibiǎoxìng de chéngshì.","Beijing is a very representative city.","adj",3],
+    ["根据","gēnjù","According to / based on","你可以根据自己的兴趣选择。","Nǐ kěyǐ gēnjù zìjǐ de xìngqù xuǎnzé.","You can choose based on your interests.","conj",2],
+    ["景点","jǐngdiǎn","Scenic spot / sight","北京有很多有名的景点。","Běijīng yǒu hěn duō yǒumíng de jǐngdiǎn.","Beijing has many famous sights.","n",2],
+    ["参观","cānguān","To visit (a place, a site)","你可以参观故宫。","Nǐ kěyǐ cānguān Gùgōng.","You can visit the Forbidden City.","v",2],
+    ["故宫","Gùgōng","The Forbidden City","故宫是以前皇帝住的地方。","Gùgōng shì yǐqián huángdì zhù de dìfang.","The Forbidden City is where the emperors used to live.","n",2],
+    ["皇帝","huángdì","Emperor","以前皇帝住在故宫。","Yǐqián huángdì zhù zài Gùgōng.","The emperors used to live in the Forbidden City.","n",2],
+    ["长城","Chángchéng","The Great Wall","我们明天去长城。","Wǒmen míngtiān qù Chángchéng.","We're going to the Great Wall tomorrow.","n",1],
+    ["古代","gǔdài","Ancient times","古代人是怎么建造长城的？","Gǔdài rén shì zěnme jiànzào Chángchéng de?","How did people in ancient times build the Great Wall?","n",2],
+    ["建造","jiànzào","To build / to construct","这座桥是什么时候建造的？","Zhè zuò qiáo shì shénme shíhou jiànzào de?","When was this bridge built?","v",3],
+    ["除了……以外","chúle……yǐwài","Apart from… / besides…","除了这些地方以外，北京还有很多胡同。","Chúle zhèxiē dìfang yǐwài, Běijīng hái yǒu hěn duō hútòng.","Besides these places, Beijing also has many hutongs.","pat",1],
+    ["烤鸭","kǎoyā","Roast duck","北京烤鸭很有名。","Běijīng kǎoyā hěn yǒumíng.","Peking duck is very famous.","n",2],
+    ["原因","yuányīn","Reason / cause","这是我来的原因。","Zhè shì wǒ lái de yuányīn.","This is the reason I came.","n",1],
+    ["站","zhàn","To stand; a station","站在那儿的那个男人是我老师。","Zhàn zài nàr de nàge nánrén shì wǒ lǎoshī.","The man standing there is my teacher.","v",1],
+    ["作业","zuòyè","Homework","你给我的作业我已经写完了。","Nǐ gěi wǒ de zuòyè wǒ yǐjīng xiě wán le.","I've already finished the homework you gave me.","n",1],
+    ["世界","shìjiè","World","世界这么大，我哪里都想去看看。","Shìjiè zhème dà, wǒ nǎlǐ dōu xiǎng qù kànkan.","The world is so big; I want to go and see everywhere.","n",1],
+    ["什么也不 / 什么都","shénme yě bù / shénme dōu","Not… anything / everything (什么 + 也/都)","我什么也不记得了。","Wǒ shénme yě bú jìde le.","I don't remember anything.","pat",1],
+    ["哪里也不 / 哪里都","nǎlǐ yě bù / nǎlǐ dōu","Not… anywhere / everywhere (哪里 + 也/都)","我哪里也不想去。","Wǒ nǎlǐ yě bù xiǎng qù.","I don't want to go anywhere.","pat",1],
+    ["……的……","……de……","Relative clause: [clause] 的 + noun","这是我给你做的蛋糕。","Zhè shì wǒ gěi nǐ zuò de dàngāo.","This is the cake that I made for you.","pat",1]
   ]]
 ];
 NEW_LESSONS.forEach(([name, rows])=>{
