@@ -114,6 +114,27 @@ const NEW_LESSONS = [
     ["什么也不 / 什么都","shénme yě bù / shénme dōu","Not… anything / everything (什么 + 也/都)","我什么也不记得了。","Wǒ shénme yě bú jìde le.","I don't remember anything.","pat",1],
     ["哪里也不 / 哪里都","nǎlǐ yě bù / nǎlǐ dōu","Not… anywhere / everywhere (哪里 + 也/都)","我哪里也不想去。","Wǒ nǎlǐ yě bù xiǎng qù.","I don't want to go anywhere.","pat",1],
     ["……的……","……de……","Relative clause: [clause] 的 + noun","这是我给你做的蛋糕。","Zhè shì wǒ gěi nǐ zuò de dàngāo.","This is the cake that I made for you.","pat",1]
+  ]],
+  ["第一次去中国 II · ……的 & word order", [
+    ["……的那个朋友","……de nàge péngyou","Word order: description FIRST, noun LAST — the friend [who …] (mirror of English)","【住在北京的】那个朋友明天会来我家。","[Zhù zài Běijīng de] nàge péngyou míngtiān huì lái wǒ jiā.","The friend [who lives in Beijing] will come to my house tomorrow.","pat",1],
+    ["我给你做的蛋糕","wǒ gěi nǐ zuò de dàngāo","The cake that I made for you","这是我给你做的蛋糕。","Zhè shì wǒ gěi nǐ zuò de dàngāo.","This is the cake that I made for you.","phr",1],
+    ["你推荐的那本书","nǐ tuījiàn de nà běn shū","The book that you recommended","我喜欢你推荐的那本书。","Wǒ xǐhuan nǐ tuījiàn de nà běn shū.","I like the book that you recommended.","phr",1],
+    ["站在那儿的那个男人","zhàn zài nàr de nàge nánrén","The man who is standing there","站在那儿的那个男人是我老师。","Zhàn zài nàr de nàge nánrén shì wǒ lǎoshī.","The man who is standing there is my teacher.","phr",1],
+    ["我来的原因","wǒ lái de yuányīn","The reason why I came","这是我来的原因。","Zhè shì wǒ lái de yuányīn.","This is the reason why I came.","phr",1],
+    ["帮助我的那个朋友","bāngzhù wǒ de nàge péngyou","The friend who helped me","她是帮助我的那个朋友。","Tā shì bāngzhù wǒ de nàge péngyou.","She is the friend who helped me.","phr",1],
+    ["我昨天给你买的礼物","wǒ zuótiān gěi nǐ mǎi de lǐwù","The gift that I bought for you yesterday","这是我昨天给你买的礼物。","Zhè shì wǒ zuótiān gěi nǐ mǎi de lǐwù.","This is the gift that I bought for you yesterday.","phr",1],
+    ["住在北京的那个朋友","zhù zài Běijīng de nàge péngyou","The friend who lives in Beijing","明天住在北京的那个朋友会来我家。","Míngtiān zhù zài Běijīng de nàge péngyou huì lái wǒ jiā.","Tomorrow the friend who lives in Beijing will come to my house.","phr",1],
+    ["你给我的作业","nǐ gěi wǒ de zuòyè","The homework that you gave me","你给我的作业我已经写完了。","Nǐ gěi wǒ de zuòyè wǒ yǐjīng xiě wán le.","The homework you gave me, I've already finished.","phr",1],
+    ["你给我的作业我写完了 / 我写完了你给我的作业","nǐ gěi wǒ de zuòyè wǒ xiě wán le / wǒ xiě wán le nǐ gěi wǒ de zuòyè","Object first or object last — both orders are fine","我已经写完了你给我的作业。","Wǒ yǐjīng xiě wán le nǐ gěi wǒ de zuòyè.","I've already finished the homework you gave me.","pat",1],
+    ["明天那个朋友会来 / 那个朋友明天会来","míngtiān nàge péngyou huì lái / nàge péngyou míngtiān huì lái","Time word at the start or after the subject — never at the end","住在北京的那个朋友明天会来我家。","Zhù zài Běijīng de nàge péngyou míngtiān huì lái wǒ jiā.","The friend who lives in Beijing will come to my house tomorrow.","pat",1],
+    ["以前皇帝住的地方","yǐqián huángdì zhù de dìfang","The place where the emperors used to live","故宫是以前皇帝住的地方。","Gùgōng shì yǐqián huángdì zhù de dìfang.","The Forbidden City is the place where the emperors used to live.","phr",2],
+    ["值得旅行的地方","zhídé lǚxíng de dìfang","Places worth travelling to","中国有很多值得旅行的地方。","Zhōngguó yǒu hěn duō zhídé lǚxíng de dìfang.","China has many places worth travelling to.","phr",2],
+    ["适合自己的地方","shìhé zìjǐ de dìfang","A place that suits you","选择一个适合自己的地方。","Xuǎnzé yí ge shìhé zìjǐ de dìfang.","Choose a place that suits you.","phr",2],
+    ["学过的课文","xué guo de kèwén","The texts (we) have studied","学过的课文，每一篇你都复习了吗？","Xué guo de kèwén, měi yì piān nǐ dōu fùxí le ma?","The texts we've studied — have you reviewed every one?","phr",2],
+    ["昨天……了","zuótiān……le","Past: time word + 了","我昨天吃了烤鸭。","Wǒ zuótiān chī le kǎoyā.","I ate roast duck yesterday.","pat",1],
+    ["明天（会）……","míngtiān (huì)……","Future: 明天 makes 会 optional","我明天会去北京。","Wǒ míngtiān huì qù Běijīng.","I will go to Beijing tomorrow.","pat",1],
+    ["以后会……","yǐhòu huì……","Future (later on): 以后 + 会","我以后会去中国工作。","Wǒ yǐhòu huì qù Zhōngguó gōngzuò.","I will go to China for work in the future.","pat",1],
+    ["以前……","yǐqián……","Past (used to): 以前 + verb","我以前住在南方。","Wǒ yǐqián zhù zài nánfāng.","I lived in the south before.","pat",1]
   ]]
 ];
 NEW_LESSONS.forEach(([name, rows])=>{
