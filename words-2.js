@@ -135,6 +135,30 @@ const NEW_LESSONS = [
     ["明天（会）……","míngtiān (huì)……","Future: 明天 makes 会 optional","我明天会去北京。","Wǒ míngtiān huì qù Běijīng.","I will go to Beijing tomorrow.","pat",1],
     ["以后会……","yǐhòu huì……","Future (later on): 以后 + 会","我以后会去中国工作。","Wǒ yǐhòu huì qù Zhōngguó gōngzuò.","I will go to China for work in the future.","pat",1],
     ["以前……","yǐqián……","Past (used to): 以前 + verb","我以前住在南方。","Wǒ yǐqián zhù zài nánfāng.","I lived in the south before.","pat",1]
+  ]],
+  ["年轻人的夜生活 · Intermediate reading III", [
+    ["万圣节","Wànshèngjié","Halloween","万圣节朋友邀请我去玩。","Wànshèngjié péngyou yāoqǐng wǒ qù wán.","A friend invited me out for Halloween.","n",3],
+    ["邀请","yāoqǐng","To invite","朋友邀请我去他家。","Péngyou yāoqǐng wǒ qù tā jiā.","A friend invited me to his home.","v",2],
+    ["化妆","huàzhuāng","To put on makeup","她每天早上化妆。","Tā měitiān zǎoshang huàzhuāng.","She puts on makeup every morning.","v",2],
+    ["听起来","tīng qǐlái","Sounds (like)…","听起来很有意思。","Tīng qǐlái hěn yǒu yìsi.","That sounds interesting.","phr",1],
+    ["还算","háisuàn","Fairly / can be considered","我的生活还算规律。","Wǒ de shēnghuó háisuàn guīlǜ.","My life is fairly regular.","adv",2],
+    ["不一样","bù yíyàng","Different / not the same","现在和以前不一样。","Xiànzài hé yǐqián bù yíyàng.","Now is different from before.","adj",1],
+    ["热情","rèqíng","Enthusiasm / warm-hearted","我对生活的热情变了。","Wǒ duì shēnghuó de rèqíng biàn le.","My enthusiasm for life has changed.","n",2],
+    ["伴侣","bànlǚ","Partner (life partner)","我希望有一个伴侣。","Wǒ xīwàng yǒu yí ge bànlǚ.","I hope to have a partner.","n",3],
+    ["孩子","háizi","Child","他们有两个孩子。","Tāmen yǒu liǎng ge háizi.","They have two children.","n",1],
+    ["而","ér","While / whereas (contrast)","年轻人喜欢晚上出去，而老年人起得很早。","Niánqīngrén xǐhuan wǎnshang chūqù, ér lǎoniánrén qǐ de hěn zǎo.","Young people like to go out at night, while older people get up early.","conj",2],
+    ["起","qǐ","To get up / to rise","老年人早上起得特别早。","Lǎoniánrén zǎoshang qǐ de tèbié zǎo.","Older people get up especially early.","v",1],
+    ["种","zhǒng","Kind / type (measure word)","这是两种不一样的生活方式。","Zhè shì liǎng zhǒng bù yíyàng de shēnghuó fāngshì.","These are two different lifestyles.","mw",1],
+    ["规律","guīlǜ","Regular / routine","老年人的生活很规律。","Lǎoniánrén de shēnghuó hěn guīlǜ.","Older people's lives are very regular.","adj",2],
+    ["作息","zuòxī","Daily schedule (work and rest)","他们的作息时间不同。","Tāmen de zuòxī shíjiān bùtóng.","Their daily schedules are different.","n",3],
+    ["好处","hǎochu","Benefit / advantage","每种生活都有它的好处。","Měi zhǒng shēnghuó dōu yǒu tā de hǎochu.","Every lifestyle has its benefits.","n",2],
+    ["白天","báitiān","Daytime","很多年轻人白天要上班。","Hěn duō niánqīngrén báitiān yào shàngbān.","Many young people have to work during the day.","n",1],
+    ["只有……才……","zhǐyǒu……cái……","Only… then… (only if)","只有晚上才有自己的时间。","Zhǐyǒu wǎnshang cái yǒu zìjǐ de shíjiān.","Only at night do they have time for themselves.","pat",1],
+    ["有的","yǒude","Some (people / things)","有的年轻人喜欢去酒吧。","Yǒude niánqīngrén xǐhuan qù jiǔbā.","Some young people like going to bars.","adv",1],
+    ["即使……也……","jíshǐ……yě……","Even if…, still…","即使已经很晚了，也不想回家。","Jíshǐ yǐjīng hěn wǎn le, yě bù xiǎng huí jiā.","Even if it's already very late, they still don't want to go home.","pat",2],
+    ["社交","shèjiāo","Socializing / social","晚上是放松和社交的时间。","Wǎnshang shì fàngsōng hé shèjiāo de shíjiān.","Night is the time for relaxing and socializing.","n",2],
+    ["呆","dāi","To stay (somewhere)","有时我喜欢呆在家里。","Yǒushí wǒ xǐhuan dāi zài jiā lǐ.","Sometimes I like to stay at home.","v",2],
+    ["俱乐部","jùlèbù","Club","我和朋友去俱乐部。","Wǒ hé péngyou qù jùlèbù.","I go to a club with friends.","n",3]
   ]]
 ];
 NEW_LESSONS.forEach(([name, rows])=>{
