@@ -159,6 +159,33 @@ const NEW_LESSONS = [
     ["社交","shèjiāo","Socializing / social","晚上是放松和社交的时间。","Wǎnshang shì fàngsōng hé shèjiāo de shíjiān.","Night is the time for relaxing and socializing.","n",2],
     ["呆","dāi","To stay (somewhere)","有时我喜欢呆在家里。","Yǒushí wǒ xǐhuan dāi zài jiā lǐ.","Sometimes I like to stay at home.","v",2],
     ["俱乐部","jùlèbù","Club","我和朋友去俱乐部。","Wǒ hé péngyou qù jùlèbù.","I go to a club with friends.","n",3]
+  ]],
+  ["年轻人的夜生活 II · 来/去 & 上下", [
+    ["深圳","Shēnzhèn","Shenzhen (city)","深圳离香港很近。","Shēnzhèn lí Xiānggǎng hěn jìn.","Shenzhen is very close to Hong Kong.","n",2],
+    ["香港","Xiānggǎng","Hong Kong","你去过香港吗？","Nǐ qù guo Xiānggǎng ma?","Have you been to Hong Kong?","n",2],
+    ["看起来","kàn qǐlái","Looks (like) / seems","他看起来很年轻，其实已经四十岁了。","Tā kàn qǐlái hěn niánqīng, qíshí yǐjīng sìshí suì le.","He looks young, but he's actually already forty.","phr",1],
+    ["化妆舞会","huàzhuāng wǔhuì","Costume party / masquerade","朋友邀请我去参加他的化妆舞会。","Péngyou yāoqǐng wǒ qù cānjiā tā de huàzhuāng wǔhuì.","A friend invited me to his costume party.","n",3],
+    ["年轻","niánqīng","Young","他看起来很年轻。","Tā kàn qǐlái hěn niánqīng.","He looks very young.","adj",1],
+    ["富有","fùyǒu","Rich / wealthy","他很富有，有很多钱。","Tā hěn fùyǒu, yǒu hěn duō qián.","He's wealthy — he has a lot of money.","adj",3],
+    ["准时","zhǔnshí","On time / punctual","老年人每天都很准时。","Lǎoniánrén měitiān dōu hěn zhǔnshí.","Older people are punctual every day.","adj",2],
+    ["醒","xǐng","To wake up (eyes open)","我早上六点就醒了，但是七点才起床。","Wǒ zǎoshang liù diǎn jiù xǐng le, dànshì qī diǎn cái qǐchuáng.","I woke at six but didn't get up until seven.","v",1],
+    ["腿","tuǐ","Leg","爬山以后我的腿很疼。","Pá shān yǐhòu wǒ de tuǐ hěn téng.","My legs hurt after climbing the mountain.","n",1],
+    ["脚","jiǎo","Foot / feet","我的脚有点儿疼。","Wǒ de jiǎo yǒudiǎnr téng.","My feet hurt a bit.","n",1],
+    ["坐","zuò","To sit","你累了吧？坐一下。","Nǐ lèi le ba? Zuò yíxià.","You must be tired — sit down for a bit.","v",1],
+    ["下","xià","Down / to go down","我们下山吧。","Wǒmen xià shān ba.","Let's go down the mountain.","v",1],
+    ["上楼","shàng lóu","To go upstairs","我先上楼了。","Wǒ xiān shàng lóu le.","I'm going upstairs first.","v",1],
+    ["楼下","lóu xià","Downstairs","我在楼下等你。","Wǒ zài lóu xià děng nǐ.","I'll wait for you downstairs.","n",1],
+    ["楼上","lóu shàng","Upstairs","他住在楼上。","Tā zhù zài lóu shàng.","He lives upstairs.","n",1],
+    ["上来","shàng lái","To come up (toward the speaker)","我在山顶，你上来吧！","Wǒ zài shāndǐng, nǐ shàng lái ba!","I'm at the top — come up!","v",1],
+    ["上去","shàng qù","To go up (away from the speaker)","我在山脚等你，你上去吧。","Wǒ zài shānjiǎo děng nǐ, nǐ shàng qù ba.","I'll wait at the foot — you go up.","v",1],
+    ["下来","xià lái","To come down (toward the speaker)","我在楼下，你下来吧。","Wǒ zài lóu xià, nǐ xià lái ba.","I'm downstairs — come down.","v",1],
+    ["下去","xià qù","To go down (away from the speaker)","你先下去，我马上就来。","Nǐ xiān xià qù, wǒ mǎshàng jiù lái.","You go down first, I'll be right there.","v",1],
+    ["山脚","shānjiǎo","Foot of the mountain","我们在山脚见面吧。","Wǒmen zài shānjiǎo jiànmiàn ba.","Let's meet at the foot of the mountain.","n",2],
+    ["山顶","shāndǐng","Top of the mountain","我们一步一步地爬到了山顶。","Wǒmen yí bù yí bù de pá dào le shāndǐng.","Step by step, we climbed to the top.","n",2],
+    ["……一下","……yíxià","Do something briefly / for a moment (verb + 一下)","请等一下。","Qǐng děng yíxià.","Please wait a moment.","pat",1],
+    ["一点点","yìdiǎndiǎn","A tiny bit","我只喝一点点水。","Wǒ zhǐ hē yìdiǎndiǎn shuǐ.","I'll just drink a tiny bit of water.","adv",1],
+    ["……到","……dào","To reach / to manage to get (verb + 到)","在山顶我们吃到了很好吃的水果。","Zài shāndǐng wǒmen chī dào le hěn hǎochī de shuǐguǒ.","At the top we got to eat delicious fruit.","pat",1],
+    ["……来 / ……去","……lái / ……qù","Toward the speaker / away from the speaker","我在楼上，你上来吧；他在楼下，你下去找他。","Wǒ zài lóu shàng, nǐ shàng lái ba; tā zài lóu xià, nǐ xià qù zhǎo tā.","I'm upstairs — come up; he's downstairs — go down to find him.","pat",1]
   ]]
 ];
 NEW_LESSONS.forEach(([name, rows])=>{
