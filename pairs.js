@@ -106,5 +106,11 @@ const PAIRS = [
     ["考试以前要＿＿。","Kǎoshì yǐqián yào fùxí.","Before the exam you should review."]],
   ["地方","位置","地方 dìfang = a place (general). 位置 wèizhi = a position / location, where exactly something sits.",
     ["这是一个很漂亮的＿＿。","Zhè shì yí ge hěn piàoliang de dìfang.","This is a beautiful place."],
-    ["这家店的＿＿很好，就在地铁站旁边。","Zhè jiā diàn de wèizhi hěn hǎo, jiù zài dìtiězhàn pángbiān.","The shop's location is great, right next to the subway."]]
+    ["这家店的＿＿很好，就在地铁站旁边。","Zhè jiā diàn de wèizhi hěn hǎo, jiù zài dìtiězhàn pángbiān.","The shop's location is great, right next to the subway."]],
+  ["上来","上去","来 = toward the speaker, 去 = away from the speaker. Ask: where am I standing? At the top → 上来; at the bottom → 上去.",
+    ["我在山顶，你＿＿吧！","Wǒ zài shāndǐng, nǐ shàng lái ba!","I'm at the top — come up!"],
+    ["我在山脚等你，你＿＿吧。","Wǒ zài shānjiǎo děng nǐ, nǐ shàng qù ba.","I'll wait at the foot — you go up."]],
+  ["下来","下去","Same rule going down: speaker below → 下来 (come down to me); speaker above → 下去 (go down, away from me).",
+    ["我在楼下，你＿＿吧。","Wǒ zài lóu xià, nǐ xià lái ba.","I'm downstairs — come down."],
+    ["我在楼上看着你，你先＿＿吧。","Wǒ zài lóu shàng kànzhe nǐ, nǐ xiān xià qù ba.","I'm watching from upstairs — you go down first."]]
 ];
